@@ -32,6 +32,8 @@ export default class VehicleModel extends Model {
     })
     avatar_url;
     @attr('point') location;
+    @attr('string') speed;
+    @attr('string') heading;
     @attr('string') make;
     @attr('string') model;
     @attr('string') year;
