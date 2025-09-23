@@ -1,5 +1,6 @@
 import Model, { attr, belongsTo, hasMany } from '@ember-data/model';
 import { computed } from '@ember/object';
+import { notEmpty } from '@ember/object/computed';
 import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
 
 export default class ContactModel extends Model {
@@ -37,6 +38,8 @@ export default class ContactModel extends Model {
     @attr('date') updated_at;
 
     /** @computed */
+    @notEmpty('place_uuid') has_place;
+
     @computed('public_id') get customerId() {
         return this.public_id.replace('contact_', 'customer_');
     }

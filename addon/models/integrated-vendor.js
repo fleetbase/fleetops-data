@@ -24,11 +24,11 @@ export default class IntegratedVendorModel extends FacilitatorModel {
     @attr('string') phone;
     @attr('boolean') sandbox;
     @attr('boolean', { defaultValue: true }) isIntegratedVendor;
-    @attr('raw') credentials;
-    @attr('raw') options;
-    @attr('raw') provider_settings;
-    @attr('raw') service_types;
-    @attr('raw') supported_countries;
+    @attr('object') credentials;
+    @attr('object') options;
+    @attr('object') provider_options;
+    @attr('object') service_types;
+    @attr('array') supported_countries;
 
     /** @dates */
     @attr('date') deleted_at;

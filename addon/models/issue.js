@@ -21,15 +21,16 @@ export default class IssueModel extends Model {
     @belongsTo('driver') driver;
 
     /** @attributes */
-    @attr('string') driver_name;
-    @attr('string') vehicle_name;
-    @attr('string') assignee_name;
-    @attr('string') reporter_name;
+    @attr('string') title;
     @attr('string') type;
     @attr('string') category;
     @attr('string') report;
     @attr('string') priority;
     @attr('string') status;
+    @attr('string') driver_name;
+    @attr('string') vehicle_name;
+    @attr('string') assignee_name;
+    @attr('string') reporter_name;
     @attr('point') location;
     @attr('raw') tags;
     @attr('raw') meta;

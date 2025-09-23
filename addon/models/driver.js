@@ -56,6 +56,7 @@ export default class DriverModel extends Model {
     @attr('string') city;
     @attr('string') status;
     @attr('boolean') online;
+    @attr('raw') meta;
 
     /** @dates */
     @attr('date') deleted_at;

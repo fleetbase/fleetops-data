@@ -48,6 +48,10 @@ export default class OrderModel extends Model {
     /** @aliases */
     @alias('driver_assigned') driver;
     @alias('vehicle_assigned') vehicle;
+    @alias('payload.payloadCoordinates') payloadCoordinates;
+    @alias('payload.routeWaypoints') routeWaypoints;
+    @alias('payload.places') places;
+    @alias('payload.waypointPlaces') waypointPlaces;
 
     /** @attributes */
     @attr('string') tracking;
@@ -93,6 +97,10 @@ export default class OrderModel extends Model {
 
     /** @tracked */
     @tracked selected = false;
+    @tracked imported = false;
+    @tracked servicable = false;
+    @tracked optimized = false;
+    @tracked cfManager = null;
 
     /** @computed */
     @notEmpty('facilitator_uuid') has_facilitator;
@@ -109,6 +117,7 @@ export default class OrderModel extends Model {
     @bool('dispatched') isDispatched;
     @not('dispatched') isNotDispatched;
 
+    /** @computed */
     @computed('payload.{pickup.name,current_waypoint_uui,waypoints.@each.name}')
     get pickupName() {
         const { payload, meta } = this;
@@ -285,6 +294,11 @@ export default class OrderModel extends Model {
     // eslint-disable-next-line ember/use-brace-expansion
     @computed('payload.isMultiDrop', 'payload.waypoints.[]', 'payload.pickup_uuid', 'payload.dropoff_uuid')
     get isMultipleDropoffOrder() {
+        return this.payload?.isMultiDrop;
+    }
+
+    @computed('payload.isMultiDrop', 'payload.waypoints.[]', 'payload.pickup_uuid', 'payload.dropoff_uuid')
+    get hasWaypoints() {
         return this.payload?.isMultiDrop;
     }
 

@@ -27,6 +27,7 @@ export default class VehicleModel extends Model {
         defaultValue: get(config, 'defaultValues.vehicleImage'),
     })
     photo_url;
+    @attr('string') name;
     @attr('string') driver_name;
     @attr('string') vendor_name;
     @attr('string') display_name;
@@ -44,7 +45,7 @@ export default class VehicleModel extends Model {
     @attr('string') plate_number;
     @attr('string') vin;
     @attr('raw') vin_data;
-    @attr('raw') model_data;
+    @attr('raw') specs;
     @attr('raw') telematics;
     @attr('raw') meta;
     @attr('string') status;
@@ -56,9 +57,8 @@ export default class VehicleModel extends Model {
     @attr('date') updated_at;
 
     /** @computed */
-    @computed('year', 'make', 'model', 'trim', 'plate_number', 'internal_id') get displayName() {
-        const nameSegments = [this.year, this.make, this.model, this.trim, this.plate_number, this.internal_id];
-        return nameSegments.filter(Boolean).join(' ').trim();
+    @computed('name', 'display_name') get displayName() {
+        return this.name ?? this.display_name;
     }
 
     @computed('updated_at') get updatedAgo() {

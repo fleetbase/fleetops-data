@@ -106,6 +106,14 @@ export default class PayloadModel extends Model {
         return this.waypoints;
     }
 
+    @computed('{dropoff,pickup,waypoints}', 'waypoints.[]') get places() {
+        return [this.pickup, ...this.waypoints.toArray(), this.pickup].filter(Boolean);
+    }
+
+    @computed('waypoints.@each.place', 'waypoints.[]') get waypointPlaces() {
+        return this.waypoints.toArray().map((wp) => wp.place);
+    }
+
     @computed('{dropoff,pickup,waypoints}', 'waypoints.[]') get payloadCoordinates() {
         let waypoints = [];
         let coordinates = [];

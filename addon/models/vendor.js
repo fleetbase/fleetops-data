@@ -97,4 +97,8 @@ export default class VendorModel extends Model {
 
         return this.type.replace('-', ' ').split(' ').map(capitalize).join(' ');
     }
+
+    get isIntegratedVendor() {
+        return this.type === 'integrated_vendor';
+    }
 }

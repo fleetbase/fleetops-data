@@ -10,7 +10,7 @@ export default class CustomerModel extends ContactModel {
     @attr('string') customer_type;
 
     /** @relations */
-    @hasMany('waypoint') waypoints;
+    @hasMany('waypoint', { async: false, inverse: 'customer' }) waypoints;
 
     /** @computed */
     @equal('customer_type', 'vendor') isVendor;

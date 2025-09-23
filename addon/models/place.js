@@ -78,6 +78,10 @@ export default class PlaceModel extends Model {
     }
 
     /** @computed */
+    @computed('address', 'name', 'street1') get displayName() {
+        return this.name ?? this.address ?? this.street1;
+    }
+    
     @computed('location') get longitude() {
         return get(this.location, 'coordinates.0');
     }
