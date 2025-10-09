@@ -1,8 +1,7 @@
-import Model, { attr, belongsTo } from '@ember-data/model';
+import Model, { attr, belongsTo, hasMany } from '@ember-data/model';
 import { computed } from '@ember/object';
 import { isArray } from '@ember/array';
 import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
-import getWithDefault from '@fleetbase/ember-core/utils/get-with-default';
 import first from '@fleetbase/ember-core/utils/first';
 
 export default class ZoneModel extends Model {
@@ -12,6 +11,7 @@ export default class ZoneModel extends Model {
 
     /** @relationships */
     @belongsTo('service-area') service_area;
+    @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @attributes */
     @attr('string') name;
@@ -28,23 +28,12 @@ export default class ZoneModel extends Model {
     @attr('date') updated_at;
 
     /** @computed */
-    @computed('border.coordinates', 'isNew') get locations() {
-        let coordinates = getWithDefault(this.border, 'coordinates', []);
-        let isCoordinatesWrapped = isArray(coordinates) && isArray(coordinates[0]) && coordinates[0].length > 2;
-        // hotfix patch when coordinates are wrapped in array
-        if (isCoordinatesWrapped) {
-            coordinates = first(coordinates);
-        }
+    @computed('border.coordinates.[]') get coordinates() {
+        return this.border?.coordinates[0] ?? [];
+    }
 
-        if (this.isNew) {
-            return coordinates;
-        }
-
-        return coordinates.map((coord) => {
-            let [longitude, latitude] = coord;
-
-            return [latitude, longitude];
-        });
+    @computed('coordinates') get leafletCoordinates() {
+        return this.coordinates.map(([longitude, latitude]) => [latitude, longitude]);
     }
 
     @computed('updated_at') get updatedAgo() {
@@ -58,7 +47,7 @@ export default class ZoneModel extends Model {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
@@ -79,7 +68,7 @@ export default class ZoneModel extends Model {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {

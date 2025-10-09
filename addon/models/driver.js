@@ -29,6 +29,7 @@ export default class DriverModel extends Model {
     @belongsTo('vehicle', { async: true }) vehicle;
     @belongsTo('order', { async: true }) current_job;
     @belongsTo('vendor', { async: true }) vendor;
+    @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @attributes */
     @attr('string') name;
@@ -91,7 +92,7 @@ export default class DriverModel extends Model {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
@@ -112,7 +113,7 @@ export default class DriverModel extends Model {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {

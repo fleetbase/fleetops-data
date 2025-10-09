@@ -1,4 +1,4 @@
-import Model, { attr, belongsTo } from '@ember-data/model';
+import Model, { attr, belongsTo, hasMany } from '@ember-data/model';
 import { computed } from '@ember/object';
 import { getOwner } from '@ember/application';
 import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
@@ -19,6 +19,7 @@ export default class IssueModel extends Model {
     @belongsTo('user') assignee;
     @belongsTo('vehicle') vehicle;
     @belongsTo('driver') driver;
+    @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @attributes */
     @attr('string') title;
@@ -52,7 +53,7 @@ export default class IssueModel extends Model {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
@@ -73,7 +74,7 @@ export default class IssueModel extends Model {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {

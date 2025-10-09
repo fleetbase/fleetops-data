@@ -10,6 +10,7 @@ export default class ServiceAreaSerializer extends ApplicationSerializer.extend(
     get attrs() {
         return {
             zones: { embedded: 'always' },
+            custom_field_values: { embedded: 'always' },
         };
     }
 

@@ -53,6 +53,6 @@ export default class IntegratedVendorModel extends FacilitatorModel {
             return null;
         }
 
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 }

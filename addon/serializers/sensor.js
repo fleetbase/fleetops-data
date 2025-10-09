@@ -1,3 +1,4 @@
-import JSONAPISerializer from '@ember-data/serializer/json-api';
+import ApplicationSerializer from '@fleetbase/ember-core/serializers/application';
+import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
 
-export default class SensorSerializer extends JSONAPISerializer {}
+export default class SensorSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {}

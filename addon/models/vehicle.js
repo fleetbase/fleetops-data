@@ -15,12 +15,15 @@ export default class VehicleModel extends Model {
     @attr('string') company_uuid;
     @attr('string') photo_uuid;
     @attr('string') vendor_uuid;
-    @attr('boolean') online;
+    @attr('string') category_uuid;
+    @attr('string') warranty_uuid;
+    @attr('string') telematic_uuid;
 
     /** @relationships */
     @belongsTo('driver', { async: false }) driver;
     @belongsTo('vendor', { async: false }) vendor;
-    @hasMany('vehicle-device', { async: false }) devices;
+    @hasMany('device', { async: false }) devices;
+    @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @attributes */
     @attr('string', {
@@ -28,6 +31,7 @@ export default class VehicleModel extends Model {
     })
     photo_url;
     @attr('string') name;
+    @attr('string') description;
     @attr('string') driver_name;
     @attr('string') vendor_name;
     @attr('string') display_name;
@@ -37,21 +41,49 @@ export default class VehicleModel extends Model {
     avatar_url;
     @attr('string') avatar_value;
     @attr('point') location;
+    @attr('string') speed;
+    @attr('string') heading;
+    @attr('string') altitude;
     @attr('string') make;
     @attr('string') model;
+    @attr('string') model_type;
     @attr('string') year;
     @attr('string') trim;
+    @attr('string') fuel_type;
+    @attr('string') fuel_volume_unit;
+    @attr('string') color;
+    @attr('string') transmission;
     @attr('string') type;
+    @attr('string') class;
+    @attr('string', { defaultValue: 'km' }) measurement_system;
+    @attr('string') body_type;
+    @attr('string') body_sub_type;
+    @attr('string') usage_type;
+    @attr('string') ownership_type;
+    @attr('string') odometer;
+    @attr('string', { defaultValue: 'km' }) odometer_unit;
     @attr('string') plate_number;
+    @attr('string') call_sign;
+    @attr('string') serial_number;
     @attr('string') vin;
+    @attr('string') financing_status;
+    @attr('string') currency;
+    @attr('number') insurance_value;
+    @attr('number') depreciation_rate;
+    @attr('number') current_value;
+    @attr('number') acquisition_cost;
+    @attr('string') notes;
+    @attr('string') status;
+    @attr('string') slug;
+    @attr('boolean') online;
     @attr('raw') vin_data;
     @attr('raw') specs;
     @attr('raw') telematics;
     @attr('raw') meta;
-    @attr('string') status;
-    @attr('string') slug;
 
     /** @dates */
+    @attr('date') purchased_at;
+    @attr('date') lease_expires_at;
     @attr('date') deleted_at;
     @attr('date') created_at;
     @attr('date') updated_at;
@@ -59,6 +91,10 @@ export default class VehicleModel extends Model {
     /** @computed */
     @computed('name', 'display_name') get displayName() {
         return this.name ?? this.display_name;
+    }
+
+    @computed('year', 'make', 'model') get yearMakeModel() {
+        return [this.year, this.make, this.model].filter(Boolean).join(' ');
     }
 
     @computed('updated_at') get updatedAgo() {
@@ -72,7 +108,7 @@ export default class VehicleModel extends Model {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
@@ -93,7 +129,7 @@ export default class VehicleModel extends Model {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {
@@ -150,40 +186,29 @@ export default class VehicleModel extends Model {
     @not('hasValidCoordinates') hasInvalidCoordinates;
 
     /** @methods */
-    loadDriver() {
+    async loadDriver() {
         const owner = getOwner(this);
         const store = owner.lookup('service:store');
 
-        return new Promise((resolve) => {
-            if (isRelationMissing(this, 'driver')) {
-                return store
-                    .findRecord('driver', this.driver_uuid)
-                    .then((driver) => {
-                        this.driver = driver;
-
-                        resolve(driver);
-                    })
-                    .catch(() => {
-                        resolve(null);
-                    });
-            }
-
-            resolve(this.driver);
-        });
+        try {
+            const driver = await store.findRecord('driver', this.driver_uuid);
+            this.driver = driver;
+            return driver;
+        } catch (err) {
+            throw err;
+        }
     }
-    loadDevices() {
+
+    async loadDevices() {
         const owner = getOwner(this);
         const store = owner.lookup('service:store');
 
-        return new Promise((resolve, reject) => {
-            return store
-                .findRecord('vehicle-device', { vehicle_uuid: this.id })
-                .then((devices) => {
-                    this.vehicle_devices = devices;
-
-                    resolve(devices);
-                })
-                .catch(reject);
-        });
+        try {
+            const devices = await store.query('device', { vehicle_uuid: this.id });
+            this.devices = devices;
+            return devices;
+        } catch (err) {
+            throw err;
+        }
     }
 }

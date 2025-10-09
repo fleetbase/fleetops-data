@@ -52,6 +52,9 @@ export default class OrderModel extends Model {
     @alias('payload.routeWaypoints') routeWaypoints;
     @alias('payload.places') places;
     @alias('payload.waypointPlaces') waypointPlaces;
+    @alias('payload.orderWaypoints') orderWaypoints;
+    @alias('payload.entitiesByDestination') entitiesByDestination;
+    @alias('payload.isMultiDrop') isMultiDrop;
 
     /** @attributes */
     @attr('string') tracking;

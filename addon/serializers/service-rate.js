@@ -9,6 +9,7 @@ export default class ServiceRateSerializer extends ApplicationSerializer.extend(
      */
     get attrs() {
         return {
+            order_config: { embedded: 'always' },
             zone: { embedded: 'always' },
             service_area: { embedded: 'always' },
             parcel_fees: { embedded: 'always' },

@@ -1,7 +1,8 @@
-import Model, { attr } from '@ember-data/model';
+import Model, { attr, hasMany } from '@ember-data/model';
 import { tracked } from '@glimmer/tracking';
 import { computed, get } from '@ember/object';
 import { not } from '@ember/object/computed';
+import { Point } from '../utils/geojson';
 import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
 import isValidCoordinates from '@fleetbase/ember-core/utils/is-valid-coordinates';
 import config from 'ember-get-config';
@@ -37,13 +38,21 @@ export default class PlaceModel extends Model {
     @attr('string') vendor_name;
     @attr('string') _import_id;
     @attr('string') eta;
-    @attr('point') location;
+    @attr('point', {
+        defaultValue: function () {
+            return new Point(0, 0);
+        },
+    })
+    location;
     @attr('raw') meta;
 
     /** @dates */
     @attr('date') deleted_at;
     @attr('date') created_at;
     @attr('date') updated_at;
+
+    /** @relationships */
+    @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @tracked */
     @tracked selected = false;
@@ -81,7 +90,7 @@ export default class PlaceModel extends Model {
     @computed('address', 'name', 'street1') get displayName() {
         return this.name ?? this.address ?? this.street1;
     }
-    
+
     @computed('location') get longitude() {
         return get(this.location, 'coordinates.0');
     }
@@ -139,7 +148,7 @@ export default class PlaceModel extends Model {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
@@ -160,7 +169,7 @@ export default class PlaceModel extends Model {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {

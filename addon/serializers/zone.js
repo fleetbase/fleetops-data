@@ -10,6 +10,7 @@ export default class ZoneSerializer extends ApplicationSerializer.extend(Embedde
     get attrs() {
         return {
             service_area: { serialize: 'ids' },
+            custom_field_values: { embedded: 'always' },
         };
     }
 }

@@ -33,14 +33,14 @@ export default class TrackingStatusModel extends Model {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
-        return formatDate(this.updated_at, 'dd, MMM');
+        return formatDate(this.updated_at, 'd MMM yyyy HH:mm');
     }
 
     @computed('created_at') get createdAgo() {
@@ -54,20 +54,13 @@ export default class TrackingStatusModel extends Model {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'dd, MMM');
-    }
-
-    @computed('created_at') get createdAtShortWithTime() {
-        if (!isValidDate(this.created_at)) {
-            return null;
-        }
-        return formatDate(this.created_at, 'PP p');
+        return formatDate(this.created_at, 'd MMM yyyy HH:mm');
     }
 }

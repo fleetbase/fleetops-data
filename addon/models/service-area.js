@@ -1,7 +1,6 @@
 import Model, { attr, hasMany } from '@ember-data/model';
 import { computed } from '@ember/object';
 import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
-import getWithDefault from '@fleetbase/ember-core/utils/get-with-default';
 import first from '@fleetbase/ember-core/utils/first';
 
 export default class ServiceAreaModel extends Model {
@@ -12,6 +11,7 @@ export default class ServiceAreaModel extends Model {
 
     /** @relationships */
     @hasMany('zone', { async: false }) zones;
+    @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @attributes */
     @attr('string') name;
@@ -29,20 +29,13 @@ export default class ServiceAreaModel extends Model {
     @attr('date') updated_at;
 
     /** @computed */
-    @computed('border', 'boundaries') get bounds() {
-        const polygon = this.border.get(0);
-        const coordinates = getWithDefault(polygon, 'coordinates', []);
-        const bounds = first(coordinates);
-
-        return bounds.map((coord) => {
-            let [longitude, latitude] = coord;
-
-            return [latitude, longitude];
-        });
+    @computed('border.coordinates.@each') get coordinates() {
+        const polygons = this.border?.coordinates[0] ?? [];
+        return polygons.length ? polygons[0] : [];
     }
 
-    @computed('border.coordinates.[]') get boundaries() {
-        return getWithDefault(this.border, 'coordinates', []);
+    @computed('coordinates.@each') get leafletCoordinates() {
+        return this.coordinates.map(([longitude, latitude]) => [latitude, longitude]);
     }
 
     @computed('updated_at') get updatedAgo() {
@@ -56,7 +49,7 @@ export default class ServiceAreaModel extends Model {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
@@ -77,7 +70,7 @@ export default class ServiceAreaModel extends Model {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {
