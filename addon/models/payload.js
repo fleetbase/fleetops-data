@@ -98,7 +98,8 @@ export default class PayloadModel extends Model {
         return groups;
     }
 
-    @computed('waypoints.@each') get orderWaypoints() {
+    // eslint-disable-next-line ember/use-brace-expansion
+    @computed('waypoints.[]', 'waypoints.toArray') get orderWaypoints() {
         if (this.waypoints && typeof this.waypoints.toArray === 'function') {
             return this.waypoints.toArray();
         }
@@ -106,10 +107,12 @@ export default class PayloadModel extends Model {
         return this.waypoints;
     }
 
+    // eslint-disable-next-line ember/use-brace-expansion
     @computed('{dropoff,pickup,waypoints}', 'waypoints.[]') get places() {
         return [this.pickup, ...this.waypoints.toArray(), this.pickup].filter(Boolean);
     }
 
+    // eslint-disable-next-line ember/use-brace-expansion
     @computed('waypoints.@each.place', 'waypoints.[]') get waypointPlaces() {
         return this.waypoints.toArray().map((wp) => wp.place);
     }

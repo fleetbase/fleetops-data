@@ -300,6 +300,7 @@ export default class OrderModel extends Model {
         return this.payload?.isMultiDrop;
     }
 
+    // eslint-disable-next-line ember/use-brace-expansion
     @computed('payload.isMultiDrop', 'payload.waypoints.[]', 'payload.pickup_uuid', 'payload.dropoff_uuid')
     get hasWaypoints() {
         return this.payload?.isMultiDrop;

@@ -3,7 +3,6 @@ import { get, computed } from '@ember/object';
 import { not } from '@ember/object/computed';
 import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
 import { getOwner } from '@ember/application';
-import isRelationMissing from '@fleetbase/ember-core/utils/is-relation-missing';
 import isValidCoordinates from '@fleetbase/ember-core/utils/is-valid-coordinates';
 import config from 'ember-get-config';
 
@@ -95,6 +94,10 @@ export default class VehicleModel extends Model {
 
     @computed('year', 'make', 'model') get yearMakeModel() {
         return [this.year, this.make, this.model].filter(Boolean).join(' ');
+    }
+
+    @computed('name', 'display_name', 'vin', 'serial_number', 'call_sign', 'plate_number', 'yearMakeModel') get searchString() {
+        return [this.name, this.display_name, this.vin, this.serial_number, this.call_sign, this.plate_number, this.yearMakeModel].filter(Boolean).join(' ');
     }
 
     @computed('updated_at') get updatedAgo() {
@@ -190,25 +193,19 @@ export default class VehicleModel extends Model {
         const owner = getOwner(this);
         const store = owner.lookup('service:store');
 
-        try {
-            const driver = await store.findRecord('driver', this.driver_uuid);
-            this.driver = driver;
-            return driver;
-        } catch (err) {
-            throw err;
-        }
+        const driver = await store.findRecord('driver', this.driver_uuid);
+        this.driver = driver;
+
+        return driver;
     }
 
     async loadDevices() {
         const owner = getOwner(this);
         const store = owner.lookup('service:store');
 
-        try {
-            const devices = await store.query('device', { vehicle_uuid: this.id });
-            this.devices = devices;
-            return devices;
-        } catch (err) {
-            throw err;
-        }
+        const devices = await store.query('device', { vehicle_uuid: this.id });
+        this.devices = devices;
+
+        return devices;
     }
 }

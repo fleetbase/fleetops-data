@@ -2,9 +2,7 @@ import Model, { attr, hasMany, belongsTo } from '@ember-data/model';
 import { tracked } from '@glimmer/tracking';
 import { computed, action } from '@ember/object';
 import { getOwner } from '@ember/application';
-import { isArray } from '@ember/array';
 import { format as formatDate, formatDistanceToNow } from 'date-fns';
-import isModel from '@fleetbase/ember-core/utils/is-model';
 
 export default class ServiceRate extends Model {
     /** @ids */
@@ -122,7 +120,7 @@ export default class ServiceRate extends Model {
         return this.cod_calculation_method === 'percentage';
     }
 
-    @computed('max_distance', 'max_distance_unit', 'currency') get rateFees() {
+    @computed('max_distance', 'max_distance_unit', 'currency', 'rate_fees') get rateFees() {
         const store = getOwner(this).lookup('service:store');
         const unit = this.max_distance_unit;
         const currency = this.currency;
@@ -170,6 +168,7 @@ export default class ServiceRate extends Model {
             fee: 0,
             unit: 'waypoint',
             currency: this.currency,
+            ...attributes,
         });
     }
 

@@ -1,7 +1,6 @@
 import Model, { attr, hasMany } from '@ember-data/model';
 import { computed } from '@ember/object';
 import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
-import first from '@fleetbase/ember-core/utils/first';
 
 export default class ServiceAreaModel extends Model {
     /** @ids */
@@ -29,13 +28,30 @@ export default class ServiceAreaModel extends Model {
     @attr('date') updated_at;
 
     /** @computed */
-    @computed('border.coordinates.@each') get coordinates() {
+    @computed('border.coordinates.[]') get coordinates() {
         const polygons = this.border?.coordinates[0] ?? [];
         return polygons.length ? polygons[0] : [];
     }
 
-    @computed('coordinates.@each') get leafletCoordinates() {
+    @computed('coordinates.[]') get leafletCoordinates() {
         return this.coordinates.map(([longitude, latitude]) => [latitude, longitude]);
+    }
+
+    @computed('leafletCoordinates') get firstCoordinatePair() {
+        const [latitude, longitude] = this.leafletCoordinates[0] ?? [0, 0];
+        return [latitude, longitude];
+    }
+
+    /* eslint-disable no-unused-vars */
+    @computed('firstCoordinatePair.0') get firstCoordinatePairLatitude() {
+        const [latitude, longitude] = this.firstCoordinatePair;
+        return latitude;
+    }
+
+    /* eslint-disable no-unused-vars */
+    @computed('firstCoordinatePair.1') get firstCoordinatePairLongitude() {
+        const [latitude, longitude] = this.firstCoordinatePair;
+        return longitude;
     }
 
     @computed('updated_at') get updatedAgo() {
