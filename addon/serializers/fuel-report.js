@@ -12,6 +12,7 @@ export default class FuelReportSerializer extends ApplicationSerializer.extend(E
             driver: { embedded: 'always' },
             vehicle: { embedded: 'always' },
             reporter: { embedded: 'always' },
+            custom_field_values: { embedded: 'always' },
         };
     }
 

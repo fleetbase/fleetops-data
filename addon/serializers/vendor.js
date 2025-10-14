@@ -10,6 +10,7 @@ export default class VendorSerializer extends ApplicationSerializer.extend(Embed
     get attrs() {
         return {
             place: { embedded: 'always' },
+            custom_field_values: { embedded: 'always' },
         };
     }
 }

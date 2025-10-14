@@ -20,6 +20,7 @@ export default class FleetModel extends Model {
     @hasMany('fleet', { inverse: 'parent_fleet' }) subfleets;
     @hasMany('driver') drivers;
     @hasMany('vehicle') vehicles;
+    @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @attributes */
     @attr('number') drivers_count;
@@ -50,7 +51,7 @@ export default class FleetModel extends Model {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
@@ -71,7 +72,7 @@ export default class FleetModel extends Model {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {

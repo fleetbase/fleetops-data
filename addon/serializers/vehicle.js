@@ -12,6 +12,7 @@ export default class VehicleSerializer extends ApplicationSerializer.extend(Embe
             driver: { embedded: 'always' },
             vendor: { embedded: 'always' },
             devices: { embedded: 'always' },
+            custom_field_values: { embedded: 'always' },
         };
     }
 

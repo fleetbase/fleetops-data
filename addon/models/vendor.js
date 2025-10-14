@@ -19,6 +19,7 @@ export default class VendorModel extends Model {
     /** @relationships */
     @belongsTo('place') place;
     @hasMany('contact') personnels;
+    @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @attributes */
     @attr('string') name;
@@ -59,7 +60,7 @@ export default class VendorModel extends Model {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
@@ -80,7 +81,7 @@ export default class VendorModel extends Model {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {
@@ -96,5 +97,9 @@ export default class VendorModel extends Model {
         }
 
         return this.type.replace('-', ' ').split(' ').map(capitalize).join(' ');
+    }
+
+    get isIntegratedVendor() {
+        return this.type === 'integrated_vendor';
     }
 }

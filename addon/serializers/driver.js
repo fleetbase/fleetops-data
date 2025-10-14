@@ -18,6 +18,7 @@ export default class DriverSerializer extends ApplicationSerializer.extend(Embed
             devices: { embedded: 'always' },
             current_job: { embedded: 'always' },
             jobs: { embedded: 'always' },
+            custom_field_values: { embedded: 'always' },
         };
     }
 

@@ -1,9 +1,8 @@
 import Model, { attr, hasMany, belongsTo } from '@ember-data/model';
-import { computed } from '@ember/object';
+import { tracked } from '@glimmer/tracking';
+import { computed, action } from '@ember/object';
 import { getOwner } from '@ember/application';
-import { isArray } from '@ember/array';
 import { format as formatDate, formatDistanceToNow } from 'date-fns';
-import isModel from '@fleetbase/ember-core/utils/is-model';
 
 export default class ServiceRate extends Model {
     /** @ids */
@@ -17,7 +16,12 @@ export default class ServiceRate extends Model {
     @hasMany('service-rate-fee') rate_fees;
     @hasMany('service-rate-parcel-fee') parcel_fees;
     @belongsTo('service-area') service_area;
+    @belongsTo('order-config') order_config;
     @belongsTo('zone') zone;
+    @hasMany('custom-field-value', { async: false }) custom_field_values;
+
+    /** @tracked */
+    @tracked perDropFees = [];
 
     /** @attributes */
     @attr('string') service_area_name;
@@ -27,6 +31,8 @@ export default class ServiceRate extends Model {
     @attr('string') base_fee;
     @attr('string') per_meter_flat_rate_fee;
     @attr('string') per_meter_unit;
+    @attr('string', { defaultValue: 'km' }) max_distance_unit;
+    @attr('number', { defaultValue: 1 }) max_distance;
     @attr('string') algorithm;
     @attr('string') rate_calculation_method;
     @attr('string') cod_calculation_method;
@@ -55,7 +61,7 @@ export default class ServiceRate extends Model {
     }
 
     @computed('updated_at') get updatedAt() {
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
@@ -67,7 +73,7 @@ export default class ServiceRate extends Model {
     }
 
     @computed('created_at') get createdAt() {
-        return this.created_at ? formatDate(this.created_at, 'PPP p') : null;
+        return this.created_at ? formatDate(this.created_at, 'yyyy-MM-dd HH:mm') : null;
     }
 
     @computed('created_at') get createdAtShort() {
@@ -75,7 +81,11 @@ export default class ServiceRate extends Model {
     }
 
     @computed('rate_calculation_method') get isFixedMeter() {
-        return this.rate_calculation_method === 'fixed_meter';
+        return this.rate_calculation_method === 'fixed_meter' || this.rate_calculation_method === 'fixed_rate';
+    }
+
+    @computed('rate_calculation_method') get isFixedRate() {
+        return this.rate_calculation_method === 'fixed_meter' || this.rate_calculation_method === 'fixed_rate';
     }
 
     @computed('rate_calculation_method') get isPerMeter() {
@@ -90,8 +100,8 @@ export default class ServiceRate extends Model {
         return this.rate_calculation_method === 'algo';
     }
 
-    @computed('service_type') get isParcelService() {
-        return this.service_type === 'parcel';
+    @computed('rate_calculation_method') get isParcelService() {
+        return this.rate_calculation_method === 'parcel';
     }
 
     @computed('peak_hours_calculation_method') get hasPeakHoursFlatFee() {
@@ -110,61 +120,81 @@ export default class ServiceRate extends Model {
         return this.cod_calculation_method === 'percentage';
     }
 
+    @computed('max_distance', 'max_distance_unit', 'currency', 'rate_fees') get rateFees() {
+        const store = getOwner(this).lookup('service:store');
+        const unit = this.max_distance_unit;
+        const currency = this.currency;
+        const n = Math.max(0, Number(this.max_distance) || 0);
+        const existing = (this.rate_fees?.toArray?.() ?? []).slice();
+        const byDistance = new Map(existing.map((r) => [r.distance, r]));
+
+        const rows = [];
+        for (let d = 0; d < n; d++) {
+            let rec = byDistance.get(d);
+            if (!rec) {
+                rec = store.createRecord('service-rate-fee', {
+                    distance: d,
+                    distance_unit: unit,
+                    fee: 0,
+                    currency,
+                });
+                this.rate_fees.addObject(rec);
+            } else {
+                rec.setProperties({ distance_unit: unit, currency });
+            }
+            rows.push(rec);
+        }
+
+        // note: do NOT prune here in a getter; do it via an explicit action
+        return rows;
+    }
+
     /** @methods */
-    setServiceRateFees(fees = []) {
-        if (!isArray(fees)) {
-            return this;
-        }
-
-        let serviceRateFees = [];
-        let owner = getOwner(this);
-        let store = owner.lookup('service:store');
-
-        for (let i = 0; i < fees.length; i++) {
-            let rateFee = fees.objectAt(i);
-
-            rateFee.currency = this.currency;
-
-            if (isModel(rateFee)) {
-                serviceRateFees.pushObject(rateFee);
-            } else {
-                serviceRateFees.pushObject(store.createRecord('service-rate-fee', rateFee));
-            }
-        }
-
-        this.rate_fees.pushObjects(serviceRateFees);
-
-        return this;
+    @action syncServiceRateFees() {
+        if (!this.isFixedRate) return;
+        this.set('rate_fees', this.rateFees);
     }
 
-    clearServiceRateFees() {
-        this.rate_fees.clear();
-
-        return this;
+    @action syncPerDropFees() {
+        if (!this.isPerDrop) return;
+        this.set('rate_fees', this.perDropFees);
     }
 
-    setServiceRateParcelFees(fees = []) {
-        if (!isArray(fees)) {
-            return this;
-        }
+    @action createDefaultPerDropFee(attributes = {}) {
+        const store = getOwner(this).lookup('service:store');
+        return store.createRecord('service-rate-fee', {
+            min: 1,
+            max: 5,
+            fee: 0,
+            unit: 'waypoint',
+            currency: this.currency,
+            ...attributes,
+        });
+    }
 
-        let serviceRateParcelFees = [];
-        let owner = getOwner(this);
-        let store = owner.lookup('service:store');
+    @action addPerDropRateFee() {
+        const last = this.perDropFees[this.perDropFees.length - 1];
+        const min = last ? last.max + 1 : 1;
+        const max = min + 5;
 
-        for (let i = 0; i < fees.length; i++) {
-            let parcelFee = fees.objectAt(i);
+        this.perDropFees = [
+            ...this.perDropFees,
+            {
+                min: min,
+                max: max,
+                unit: 'waypoint',
+                fee: 0,
+                currency: this.currency,
+            },
+        ];
+    }
 
-            parcelFee.currency = this.currency;
+    @action removePerDropFee(index) {
+        if (index === 0) return;
+        this.perDropFees = [...this.perDropFees.filter((_, i) => i !== index)];
+    }
 
-            if (isModel(parcelFee)) {
-                serviceRateParcelFees.pushObject(parcelFee);
-            } else {
-                serviceRateParcelFees.pushObject(store.createRecord('service-rate-parcel-fee', parcelFee));
-            }
-        }
-
-        this.parcel_fees.pushObjects(serviceRateParcelFees);
-        return this;
+    @action resetPerDropFees() {
+        this.perDropFees = [this.createDefaultPerDropFee()];
     }
 }

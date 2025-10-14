@@ -98,12 +98,23 @@ export default class PayloadModel extends Model {
         return groups;
     }
 
-    @computed('model.payload.waypoints', 'waypoints.toArray') get orderWaypoints() {
+    // eslint-disable-next-line ember/use-brace-expansion
+    @computed('waypoints.[]', 'waypoints.toArray') get orderWaypoints() {
         if (this.waypoints && typeof this.waypoints.toArray === 'function') {
             return this.waypoints.toArray();
         }
 
         return this.waypoints;
+    }
+
+    // eslint-disable-next-line ember/use-brace-expansion
+    @computed('{dropoff,pickup,waypoints}', 'waypoints.[]') get places() {
+        return [this.pickup, ...this.waypoints.toArray(), this.pickup].filter(Boolean);
+    }
+
+    // eslint-disable-next-line ember/use-brace-expansion
+    @computed('waypoints.@each.place', 'waypoints.[]') get waypointPlaces() {
+        return this.waypoints.toArray().map((wp) => wp.place);
     }
 
     @computed('{dropoff,pickup,waypoints}', 'waypoints.[]') get payloadCoordinates() {
@@ -148,7 +159,7 @@ export default class PayloadModel extends Model {
     }
 
     @computed('updated_at') get updatedAt() {
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
@@ -163,7 +174,7 @@ export default class PayloadModel extends Model {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {

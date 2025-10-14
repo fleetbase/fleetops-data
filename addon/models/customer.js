@@ -10,7 +10,7 @@ export default class CustomerModel extends ContactModel {
     @attr('string') customer_type;
 
     /** @relations */
-    @hasMany('waypoint') waypoints;
+    @hasMany('waypoint', { async: false, inverse: 'customer' }) waypoints;
 
     /** @computed */
     @equal('customer_type', 'vendor') isVendor;
@@ -27,7 +27,7 @@ export default class CustomerModel extends ContactModel {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
@@ -48,7 +48,7 @@ export default class CustomerModel extends ContactModel {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {

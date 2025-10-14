@@ -13,6 +13,7 @@ export default class ContactSerializer extends ApplicationSerializer.extend(Embe
             place: { embedded: 'always' },
             places: { embedded: 'always' },
             photo: { embedded: 'always' },
+            custom_field_values: { embedded: 'always' },
         };
     }
 }

@@ -1,5 +1,6 @@
 import Model, { attr, belongsTo, hasMany } from '@ember-data/model';
 import { computed } from '@ember/object';
+import { notEmpty } from '@ember/object/computed';
 import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
 
 export default class ContactModel extends Model {
@@ -16,6 +17,7 @@ export default class ContactModel extends Model {
     @belongsTo('user') user;
     @belongsTo('place') place;
     @hasMany('place') places;
+    @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @attributes */
     @attr('string') name;
@@ -37,6 +39,8 @@ export default class ContactModel extends Model {
     @attr('date') updated_at;
 
     /** @computed */
+    @notEmpty('place_uuid') has_place;
+
     @computed('public_id') get customerId() {
         return this.public_id.replace('contact_', 'customer_');
     }
@@ -52,7 +56,7 @@ export default class ContactModel extends Model {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
-        return formatDate(this.updated_at, 'PPP p');
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
@@ -73,7 +77,7 @@ export default class ContactModel extends Model {
         if (!isValidDate(this.created_at)) {
             return null;
         }
-        return formatDate(this.created_at, 'PPP p');
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {
