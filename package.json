@@ -1,6 +1,6 @@
 {
     "name": "@fleetbase/fleetops-data",
-    "version": "0.1.20",
+    "version": "0.1.21",
     "description": "Fleetbase Fleet-Ops based models, serializers, transforms, adapters and GeoJson utility functions.",
     "keywords": [
         "fleetbase-data",
