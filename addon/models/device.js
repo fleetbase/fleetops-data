@@ -10,6 +10,7 @@ export default class DeviceModel extends Model {
     @attr('string') warranty_uuid;
     @attr('string') attachable_type;
     @attr('string') attachable_uuid;
+    @attr('string') photo_uuid;
 
     /** @relationships */
     @belongsTo('telematic', { async: false }) telematic;
@@ -19,34 +20,42 @@ export default class DeviceModel extends Model {
     @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @attributes */
-    @attr('string') device_type;
+    @attr('string') name;
+    @attr('string') model;
+    @attr('string') location;
+    @attr('string') type;
     @attr('string') device_id;
-    @attr('string') device_provider;
-    @attr('string') device_name;
-    @attr('string') device_model;
-    @attr('string') device_location;
+    @attr('string') internal_id;
+    @attr('string') imei;
+    @attr('string') imsi;
+    @attr('string') firmware_version;
+    @attr('string') provider;
+    @attr('string') photo_url;
     @attr('string') manufacturer;
     @attr('string') serial_number;
-    @attr('string') installation_date;
-    @attr('string') last_maintenance_date;
-    @attr('raw') meta;
-    @attr('raw') data;
-    @attr('raw') options;
+    @attr('point') last_position;
+    @attr('object') meta;
+    @attr('object') data;
+    @attr('object') options;
     @attr('boolean') online;
-    @attr('string') status;
+    @attr('string', { defaultValue: 'inactive' }) status;
     @attr('string') data_frequency;
     @attr('string') notes;
     @attr('string') slug;
-    @attr('string') warranty_name;
-    @attr('string') telematic_name;
 
     /** @dates */
+    @attr('date') last_maintenance_date;
+    @attr('date') installation_date;
     @attr('date') last_online_at;
     @attr('date') deleted_at;
     @attr('date') created_at;
     @attr('date') updated_at;
 
     /** @computed */
+    @computed('name', 'serial_number', 'internal_id', 'imei', 'public_id') get displayName() {
+        return this.name || this.serial_number || this.internal_id || this.imei || this.public_id;
+    }
+
     @computed('updated_at') get updatedAgo() {
         if (!isValidDate(this.updated_at)) {
             return null;
