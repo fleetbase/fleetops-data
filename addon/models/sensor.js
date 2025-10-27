@@ -6,31 +6,41 @@ export default class SensorModel extends Model {
     /** @ids */
     @attr('string') public_id;
     @attr('string') company_uuid;
+    @attr('string') telematic_uuid;
     @attr('string') device_uuid;
     @attr('string') warranty_uuid;
     @attr('string') sensorable_type;
     @attr('string') sensorable_uuid;
+    @attr('string') photo_uuid;
 
     /** @relationships */
+    @belongsTo('telematic', { async: false }) telematic;
     @belongsTo('device', { async: false }) device;
     @belongsTo('warranty', { async: false }) warranty;
     @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @attributes */
     @attr('string') name;
-    @attr('string') sensor_type;
+    @attr('string') photo_url;
+    @attr('string') internal_id;
+    @attr('string') type;
+    @attr('string') serial_number;
+    @attr('string') imei;
+    @attr('string') imsi;
+    @attr('string') firmware_version;
     @attr('string') unit;
+    @attr('string') threshold_status;
     @attr('number') min_threshold;
     @attr('number') max_threshold;
     @attr('boolean') threshold_inclusive;
+    @attr('boolean') is_active;
     @attr('string') last_value;
-    @attr('raw') calibration;
     @attr('number') report_frequency_sec;
-    @attr('string') status;
-    @attr('raw') meta;
+    @attr('point') last_position;
+    @attr('object') calibration;
+    @attr('object') meta;
     @attr('string') slug;
-    @attr('string') device_name;
-    @attr('string') warranty_name;
+    @attr('string', { defaultValue: 'inactive' }) status;
 
     /** @dates */
     @attr('date') last_reading_at;
@@ -39,6 +49,10 @@ export default class SensorModel extends Model {
     @attr('date') updated_at;
 
     /** @computed */
+    @computed('name', 'serial_number', 'internal_id', 'imei', 'public_id') get displayName() {
+        return this.name || this.serial_number || this.internal_id || this.imei || this.public_id;
+    }
+
     @computed('updated_at') get updatedAgo() {
         if (!isValidDate(this.updated_at)) {
             return null;

@@ -190,6 +190,8 @@ export default class VehicleModel extends Model {
 
     /** @methods */
     async loadDriver() {
+        if (!this.driver_uuid) return;
+
         const owner = getOwner(this);
         const store = owner.lookup('service:store');
 

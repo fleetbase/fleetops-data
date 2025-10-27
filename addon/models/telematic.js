@@ -17,14 +17,16 @@ export default class TelematicModel extends Model {
     @attr('string') model;
     @attr('string') serial_number;
     @attr('string') firmware_version;
-    @attr('string') status;
+    @attr('string', { defaultValue: 'initialized' }) status;
     @attr('string') imei;
     @attr('string') iccid;
     @attr('string') imsi;
     @attr('string') msisdn;
-    @attr('raw') last_metrics;
-    @attr('raw') config;
-    @attr('raw') meta;
+    @attr('object') last_metrics;
+    @attr('object') credentials;
+    @attr('object') config;
+    @attr('object') meta;
+    @attr('object') provider_descriptor;
     @attr('string') slug;
     @attr('string') warranty_name;
 

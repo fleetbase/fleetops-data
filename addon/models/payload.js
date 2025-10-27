@@ -73,7 +73,7 @@ export default class PayloadModel extends Model {
         return middleWaypoints;
     }
 
-    @computed('entities', 'model.payload.{entities.[],waypoints.[]}', 'waypoints') get entitiesByDestination() {
+    @computed('entities.@each.id', 'waypoints.@each.id') get entitiesByDestination() {
         const groups = [];
 
         // create groups

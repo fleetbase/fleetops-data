@@ -84,4 +84,3 @@ export default class PositionModel extends Model {
         return 0;
     }
 }
-
