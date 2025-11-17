@@ -127,10 +127,10 @@ export default class VehicleModel extends Model {
 
     /** Financial values */
     @attr('string') currency;
-    @attr('number') insurance_value;
-    @attr('number') depreciation_rate;
-    @attr('number') current_value;
-    @attr('number') acquisition_cost;
+    @attr('string') insurance_value;
+    @attr('string') depreciation_rate;
+    @attr('string') current_value;
+    @attr('string') acquisition_cost;
 
     /** Misc text / meta */
     @attr('string') notes;
