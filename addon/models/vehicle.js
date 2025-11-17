@@ -39,38 +39,100 @@ export default class VehicleModel extends Model {
     })
     avatar_url;
     @attr('string') avatar_value;
+
+    /** Position */
     @attr('point') location;
     @attr('string') speed;
     @attr('string') heading;
     @attr('string') altitude;
+
+    /** Basic vehicle info */
     @attr('string') make;
     @attr('string') model;
     @attr('string') model_type;
     @attr('string') year;
     @attr('string') trim;
-    @attr('string') fuel_type;
-    @attr('string') fuel_volume_unit;
     @attr('string') color;
     @attr('string') transmission;
     @attr('string') type;
     @attr('string') class;
+
+    /** Measurement & fuel */
     @attr('string', { defaultValue: 'km' }) measurement_system;
+    @attr('string') fuel_type;
+    @attr('string') fuel_volume_unit;
+
+    /** Body / usage */
     @attr('string') body_type;
     @attr('string') body_sub_type;
     @attr('string') usage_type;
     @attr('string') ownership_type;
+
+    /** Odometer */
     @attr('string') odometer;
     @attr('string', { defaultValue: 'km' }) odometer_unit;
+    @attr('number') odometer_at_purchase;
+
+    /** Registration / identifiers */
     @attr('string') plate_number;
     @attr('string') call_sign;
     @attr('string') serial_number;
     @attr('string') vin;
+
+    /** Financing & lifecycle */
     @attr('string') financing_status;
+    @attr('number') loan_number_of_payments;
+    @attr('date') loan_first_payment;
+    @attr('number') loan_amount;
+    @attr('string') estimated_service_life_distance_unit;
+    @attr('number') estimated_service_life_distance;
+    @attr('number') estimated_service_life_months;
+
+    /** Capacity & dimensions */
+    @attr('number') cargo_volume;
+    @attr('number') passenger_volume;
+    @attr('number') interior_volume;
+    @attr('number') weight;
+    @attr('number') width;
+    @attr('number') length;
+    @attr('number') height;
+    @attr('number') towing_capacity;
+    @attr('number') payload_capacity;
+    @attr('number') seating_capacity;
+    @attr('number') ground_clearance;
+    @attr('number') bed_length;
+    @attr('number') fuel_capacity;
+
+    /** Regulatory / compliance */
+    @attr('string') emission_standard;
+    @attr('boolean') dpf_equipped;
+    @attr('boolean') scr_equipped;
+    @attr('number') gvwr;
+    @attr('number') gcwr;
+
+    /** Engine specs */
+    @attr('string') engine_number;
+    @attr('string') engine_model;
+    @attr('string') engine_make;
+    @attr('string') engine_family;
+    @attr('string') engine_configuration;
+    @attr('number') engine_displacement;
+    @attr('number') engine_size;
+    @attr('number') horsepower;
+    @attr('number') horsepower_rpm;
+    @attr('number') torque;
+    @attr('number') torque_rpm;
+    @attr('number') number_of_cylinders;
+    @attr('string') cylinder_arrangement;
+
+    /** Financial values */
     @attr('string') currency;
     @attr('number') insurance_value;
     @attr('number') depreciation_rate;
     @attr('number') current_value;
     @attr('number') acquisition_cost;
+
+    /** Misc text / meta */
     @attr('string') notes;
     @attr('string') status;
     @attr('string') slug;
