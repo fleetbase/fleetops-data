@@ -83,7 +83,7 @@ export default class VehicleModel extends Model {
     @attr('string') financing_status;
     @attr('number') loan_number_of_payments;
     @attr('date') loan_first_payment;
-    @attr('number') loan_amount;
+    @attr('string') loan_amount;
     @attr('string') estimated_service_life_distance_unit;
     @attr('number') estimated_service_life_distance;
     @attr('number') estimated_service_life_months;
