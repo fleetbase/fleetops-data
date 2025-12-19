@@ -119,15 +119,50 @@ export default class ServiceRate extends Model {
         return this.cod_calculation_method === 'percentage';
     }
 
-    @computed('max_distance', 'max_distance_unit', 'currency', 'rate_fees') get rateFees() {
+    @computed('rate_fees.[]', 'rate_fees.@each.distance', 'max_distance') get rateFees() {
+        const n = Math.max(0, Number(this.max_distance) || 0);
+        const existing = (this.rate_fees?.toArray?.() ?? [])
+            .filter(r => r.distance !== null && r.distance !== undefined && !r.isDeleted);
+        
+        // Return existing fees sorted by distance, filtered by max_distance
+        return existing
+            .filter(r => r.distance >= 0 && r.distance < n)
+            .sort((a, b) => a.distance - b.distance);
+    }
+
+    /** @methods */
+    @action generateFixedRateFees() {
+        if (!this.isFixedRate) return;
+        
         const store = getOwner(this).lookup('service:store');
         const unit = this.max_distance_unit;
         const currency = this.currency;
         const n = Math.max(0, Number(this.max_distance) || 0);
+        
+        // Get existing fees that have been saved (have IDs)
         const existing = (this.rate_fees?.toArray?.() ?? []).slice();
-        const byDistance = new Map(existing.map((r) => [r.distance, r]));
-
-        const rows = [];
+        const savedFees = existing.filter(r => !r.isNew);
+        const byDistance = new Map(savedFees.map((r) => [r.distance, r]));
+        
+        // Remove unsaved fees (local duplicates)
+        existing.forEach(fee => {
+            if (fee.isNew) {
+                this.rate_fees.removeObject(fee);
+                fee.unloadRecord();
+            }
+        });
+        
+        // Remove fees beyond max_distance
+        savedFees.forEach(fee => {
+            if (fee.distance >= n) {
+                this.rate_fees.removeObject(fee);
+                if (!fee.isNew) {
+                    fee.deleteRecord();
+                }
+            }
+        });
+        
+        // Create missing fees
         for (let d = 0; d < n; d++) {
             let rec = byDistance.get(d);
             if (!rec) {
@@ -139,19 +174,14 @@ export default class ServiceRate extends Model {
                 });
                 this.rate_fees.addObject(rec);
             } else {
+                // Update existing record properties
                 rec.setProperties({ distance_unit: unit, currency });
             }
-            rows.push(rec);
         }
-
-        // note: do NOT prune here in a getter; do it via an explicit action
-        return rows;
     }
-
-    /** @methods */
+    
     @action syncServiceRateFees() {
-        if (!this.isFixedRate) return;
-        this.set('rate_fees', this.rateFees);
+        this.generateFixedRateFees();
     }
 
 
