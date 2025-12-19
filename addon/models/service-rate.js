@@ -20,8 +20,7 @@ export default class ServiceRate extends Model {
     @belongsTo('zone') zone;
     @hasMany('custom-field-value', { async: false }) custom_field_values;
 
-    /** @tracked */
-    @tracked perDropFees = [];
+
 
     /** @attributes */
     @attr('string') service_area_name;
@@ -155,10 +154,7 @@ export default class ServiceRate extends Model {
         this.set('rate_fees', this.rateFees);
     }
 
-    @action syncPerDropFees() {
-        if (!this.isPerDrop) return;
-        this.set('rate_fees', this.perDropFees);
-    }
+
 
     @action createDefaultPerDropFee(attributes = {}) {
         const store = getOwner(this).lookup('service:store');
@@ -173,28 +169,41 @@ export default class ServiceRate extends Model {
     }
 
     @action addPerDropRateFee() {
-        const last = this.perDropFees[this.perDropFees.length - 1];
+        const store = getOwner(this).lookup('service:store');
+        const existingFees = this.rate_fees?.toArray?.() ?? [];
+        const last = existingFees[existingFees.length - 1];
         const min = last ? last.max + 1 : 1;
         const max = min + 5;
 
-        this.perDropFees = [
-            ...this.perDropFees,
-            {
-                min: min,
-                max: max,
-                unit: 'waypoint',
-                fee: 0,
-                currency: this.currency,
-            },
-        ];
+        const newFee = store.createRecord('service-rate-fee', {
+            min: min,
+            max: max,
+            unit: 'waypoint',
+            fee: 0,
+            currency: this.currency,
+        });
+
+        this.rate_fees.addObject(newFee);
     }
 
-    @action removePerDropFee(index) {
-        if (index === 0) return;
-        this.perDropFees = [...this.perDropFees.filter((_, i) => i !== index)];
+    @action removePerDropFee(fee) {
+        if (!fee || !fee.destroyRecord) return;
+        this.rate_fees.removeObject(fee);
+        fee.destroyRecord();
     }
 
     @action resetPerDropFees() {
-        this.perDropFees = [this.createDefaultPerDropFee()];
+        // Remove all existing per-drop fees
+        const existingFees = this.rate_fees?.toArray?.() ?? [];
+        existingFees.forEach(fee => {
+            if (fee.unit === 'waypoint') {
+                this.rate_fees.removeObject(fee);
+                fee.destroyRecord();
+            }
+        });
+        
+        // Add a new default per-drop fee
+        const defaultFee = this.createDefaultPerDropFee();
+        this.rate_fees.addObject(defaultFee);
     }
 }
