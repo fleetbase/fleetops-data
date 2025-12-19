@@ -1,6 +1,6 @@
 import Model, { attr, hasMany, belongsTo } from '@ember-data/model';
 import { tracked } from '@glimmer/tracking';
-import { computed, action } from '@ember/object';
+import { computed, action, observer } from '@ember/object';
 import { getOwner } from '@ember/application';
 import { format as formatDate, formatDistanceToNow } from 'date-fns';
 
@@ -129,6 +129,13 @@ export default class ServiceRate extends Model {
             .filter(r => r.distance >= 0 && r.distance < n)
             .sort((a, b) => a.distance - b.distance);
     }
+
+    /** @observers */
+    maxDistanceObserver = observer('max_distance', 'max_distance_unit', function() {
+        if (this.isFixedRate) {
+            this.generateFixedRateFees();
+        }
+    });
 
     /** @methods */
     @action generateFixedRateFees() {
