@@ -10,7 +10,7 @@ export default class ServiceRateFeeModel extends Model {
     @attr('number') distance;
     @attr('string') distance_unit;
     @attr('string') unit;
-    @attr('number') fee;
+    @attr('string') fee;
     @attr('string') currency;
     @attr('number') min;
     @attr('number') max;
