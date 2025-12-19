@@ -7,7 +7,7 @@ export default class ServiceRateFeeModel extends Model {
     @attr('string') service_rate_uuid;
 
     /** @attributes */
-    @attr('string') distance;
+    @attr('number') distance;
     @attr('string') distance_unit;
     @attr('string') unit;
     @attr('string') fee;
