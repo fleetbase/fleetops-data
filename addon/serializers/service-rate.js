@@ -33,18 +33,21 @@ export default class ServiceRateSerializer extends ApplicationSerializer.extend(
             setTimeout(() => {
                 const serviceRate = store.peekRecord('service-rate', serviceRateId);
                 if (serviceRate && serviceRate.isFixedRate) {
-                    // Get the saved rate_fees from the store
-                    const savedFees = rateFeeIds
-                        .map(ref => store.peekRecord('service-rate-fee', ref.id))
-                        .filter(Boolean);
+                    // Get all rate_fees
+                    const allFees = serviceRate.get('rate_fees').toArray();
+                    const savedFees = allFees.filter(f => !f.isNew);
+                    const unsavedFees = allFees.filter(f => f.isNew);
                     
-                    // Clear the relationship and add only the saved records
-                    // Use hasMany relationship methods instead of set()
-                    const rateFees = serviceRate.get('rate_fees');
-                    rateFees.clear();
-                    if (savedFees.length > 0) {
-                        rateFees.pushObjects(savedFees);
-                    }
+                    // Create a map of saved fees by distance
+                    const savedByDistance = new Map(savedFees.map(f => [f.distance, f]));
+                    
+                    // Only remove unsaved fees that duplicate saved fees
+                    unsavedFees.forEach(fee => {
+                        if (savedByDistance.has(fee.distance)) {
+                            serviceRate.get('rate_fees').removeObject(fee);
+                            fee.unloadRecord();
+                        }
+                    });
                 }
             }, 0);
         }
