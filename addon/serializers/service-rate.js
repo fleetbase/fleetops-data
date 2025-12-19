@@ -32,12 +32,19 @@ export default class ServiceRateSerializer extends ApplicationSerializer.extend(
             // Schedule after store update
             setTimeout(() => {
                 const serviceRate = store.peekRecord('service-rate', serviceRateId);
-                if (serviceRate && serviceRate.isFixedRate && rateFeeIds.length > 0) {
+                if (serviceRate && serviceRate.isFixedRate) {
                     // Get the saved rate_fees from the store
-                    const savedFees = rateFeeIds.map(ref => store.peekRecord('service-rate-fee', ref.id)).filter(Boolean);
+                    const savedFees = rateFeeIds
+                        .map(ref => store.peekRecord('service-rate-fee', ref.id))
+                        .filter(Boolean);
                     
-                    // Directly set the relationship to only the saved records
-                    serviceRate.set('rate_fees', savedFees);
+                    // Clear the relationship and add only the saved records
+                    // Use hasMany relationship methods instead of set()
+                    const rateFees = serviceRate.get('rate_fees');
+                    rateFees.clear();
+                    if (savedFees.length > 0) {
+                        rateFees.pushObjects(savedFees);
+                    }
                 }
             }, 0);
         }
