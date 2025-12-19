@@ -1,5 +1,4 @@
 import Model, { attr, hasMany, belongsTo } from '@ember-data/model';
-import { tracked } from '@glimmer/tracking';
 import { computed, action } from '@ember/object';
 import { getOwner } from '@ember/application';
 import { format as formatDate, formatDistanceToNow } from 'date-fns';
@@ -19,8 +18,6 @@ export default class ServiceRate extends Model {
     @belongsTo('order-config') order_config;
     @belongsTo('zone') zone;
     @hasMany('custom-field-value', { async: false }) custom_field_values;
-
-
 
     /** @attributes */
     @attr('string') service_area_name;
@@ -119,21 +116,15 @@ export default class ServiceRate extends Model {
         return this.cod_calculation_method === 'percentage';
     }
 
-    @computed('rate_fees.[]', 'rate_fees.@each.distance', 'max_distance') get rateFees() {
+    @computed('rate_fees.@each.distance', 'max_distance') get rateFees() {
         const n = Math.max(0, Number(this.max_distance) || 0);
-        const existing = (this.rate_fees?.toArray?.() ?? [])
-            .filter(r => r.distance !== null && r.distance !== undefined && !r.isDeleted);
-        
+        const existing = (this.rate_fees?.toArray?.() ?? []).filter((r) => r.distance !== null && r.distance !== undefined && !r.isDeleted);
+
         // Return existing fees sorted by distance, filtered by max_distance
-        return existing
-            .filter(r => r.distance >= 0 && r.distance < n)
-            .sort((a, b) => a.distance - b.distance);
+        return existing.filter((r) => r.distance >= 0 && r.distance < n).sort((a, b) => a.distance - b.distance);
     }
 
     /** @methods */
-
-
-
     @action createDefaultPerDropFee(attributes = {}) {
         const store = getOwner(this).lookup('service:store');
         return store.createRecord('service-rate-fee', {
@@ -173,13 +164,13 @@ export default class ServiceRate extends Model {
     @action resetPerDropFees() {
         // Remove all existing per-drop fees
         const existingFees = this.rate_fees?.toArray?.() ?? [];
-        existingFees.forEach(fee => {
+        existingFees.forEach((fee) => {
             if (fee.unit === 'waypoint') {
                 this.rate_fees.removeObject(fee);
                 fee.destroyRecord();
             }
         });
-        
+
         // Add a new default per-drop fee
         const defaultFee = this.createDefaultPerDropFee();
         this.rate_fees.addObject(defaultFee);
