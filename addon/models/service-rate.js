@@ -1,6 +1,6 @@
 import Model, { attr, hasMany, belongsTo } from '@ember-data/model';
 import { tracked } from '@glimmer/tracking';
-import { computed, action, observer } from '@ember/object';
+import { computed, action } from '@ember/object';
 import { getOwner } from '@ember/application';
 import { format as formatDate, formatDistanceToNow } from 'date-fns';
 
@@ -130,66 +130,7 @@ export default class ServiceRate extends Model {
             .sort((a, b) => a.distance - b.distance);
     }
 
-    /** @observers */
-    maxDistanceObserver = observer('max_distance', 'max_distance_unit', function() {
-        if (this.isFixedRate) {
-            this.generateFixedRateFees();
-        }
-    });
-
     /** @methods */
-    @action generateFixedRateFees() {
-        if (!this.isFixedRate) return;
-        
-        const store = getOwner(this).lookup('service:store');
-        const unit = this.max_distance_unit;
-        const currency = this.currency;
-        const n = Math.max(0, Number(this.max_distance) || 0);
-        
-        // Get existing fees that have been saved (have IDs)
-        const existing = (this.rate_fees?.toArray?.() ?? []).slice();
-        const savedFees = existing.filter(r => !r.isNew);
-        const byDistance = new Map(savedFees.map((r) => [r.distance, r]));
-        
-        // Remove unsaved fees (local duplicates)
-        existing.forEach(fee => {
-            if (fee.isNew) {
-                this.rate_fees.removeObject(fee);
-                fee.unloadRecord();
-            }
-        });
-        
-        // Remove fees beyond max_distance
-        savedFees.forEach(fee => {
-            if (fee.distance >= n) {
-                this.rate_fees.removeObject(fee);
-                if (!fee.isNew) {
-                    fee.deleteRecord();
-                }
-            }
-        });
-        
-        // Create missing fees
-        for (let d = 0; d < n; d++) {
-            let rec = byDistance.get(d);
-            if (!rec) {
-                rec = store.createRecord('service-rate-fee', {
-                    distance: d,
-                    distance_unit: unit,
-                    fee: 0,
-                    currency,
-                });
-                this.rate_fees.addObject(rec);
-            } else {
-                // Update existing record properties
-                rec.setProperties({ distance_unit: unit, currency });
-            }
-        }
-    }
-    
-    @action syncServiceRateFees() {
-        this.generateFixedRateFees();
-    }
 
 
 
