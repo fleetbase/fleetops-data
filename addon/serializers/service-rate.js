@@ -1,5 +1,6 @@
 import ApplicationSerializer from '@fleetbase/ember-core/serializers/application';
 import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
+import { next } from '@ember/runloop';
 
 export default class ServiceRateSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
     /**
@@ -29,8 +30,8 @@ export default class ServiceRateSerializer extends ApplicationSerializer.extend(
             const serviceRateId = normalized.data.id;
             const rateFeeIds = normalized.data.relationships?.rate_fees?.data || [];
             
-            // Schedule after store update
-            setTimeout(() => {
+            // Schedule after store update using Ember run loop
+            next(() => {
                 const serviceRate = store.peekRecord('service-rate', serviceRateId);
                 if (serviceRate && serviceRate.isFixedRate) {
                     // Get all rate_fees
@@ -49,7 +50,7 @@ export default class ServiceRateSerializer extends ApplicationSerializer.extend(
                         }
                     });
                 }
-            }, 0);
+            });
         }
         
         return normalized;
