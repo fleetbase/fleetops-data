@@ -95,6 +95,7 @@ export default class OrderModel extends Model {
     /** @dates */
     @attr('date') scheduled_at;
     @attr('date') dispatched_at;
+    @attr('date') started_at;
     @attr('date') deleted_at;
     @attr('date') created_at;
     @attr('date') updated_at;
