@@ -27,6 +27,7 @@ export default class ContactModel extends Model {
     @attr('string') address;
     @attr('string') address_street;
     @attr('string') type;
+    @attr('string') subtype;
     @attr('string', {
         defaultValue: 'https://s3.ap-southeast-1.amazonaws.com/flb-assets/static/no-avatar.png',
     })
