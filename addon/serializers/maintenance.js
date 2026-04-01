@@ -2,20 +2,19 @@ import ApplicationSerializer from '@fleetbase/ember-core/serializers/application
 import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
 
 /**
- * Maps the shorthand type strings produced by Utils::toEmberResourceType() on the
- * backend to the Ember Data model names used by the polymorphic @belongsTo
- * relationships.
+ * Maps the full PHP class names returned by the backend to the Ember Data
+ * model names used by the polymorphic @belongsTo relationships.
  */
 const MAINTENANCE_SUBJECT_TYPE_MAP = {
-    'fleet-ops:vehicle': 'maintenance-subject-vehicle',
-    'fleet-ops:equipment': 'maintenance-subject-equipment',
+    'Fleetbase\\FleetOps\\Models\\Vehicle': 'maintenance-subject-vehicle',
+    'Fleetbase\\FleetOps\\Models\\Equipment': 'maintenance-subject-equipment',
 };
 
 const FACILITATOR_TYPE_MAP = {
-    'fleet-ops:vendor': 'facilitator-vendor',
-    'fleet-ops:contact': 'facilitator-contact',
-    'fleet-ops:integrated-vendor': 'facilitator-integrated-vendor',
-    'fleet-ops:driver': 'facilitator-contact',
+    'Fleetbase\\FleetOps\\Models\\Vendor': 'facilitator-vendor',
+    'Fleetbase\\FleetOps\\Models\\Contact': 'facilitator-contact',
+    'Fleetbase\\FleetOps\\Models\\IntegratedVendor': 'facilitator-integrated-vendor',
+    'Fleetbase\\FleetOps\\Models\\Driver': 'facilitator-contact',
 };
 
 /**
