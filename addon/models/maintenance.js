@@ -15,6 +15,7 @@ export default class MaintenanceModel extends Model {
     /** @computed names — server-side convenience fields (read-only) */
     @attr('string') maintainable_name;
     @attr('string') performed_by_name;
+    @attr('string') work_order_subject;
 
     /** @relationships */
     @belongsTo('work-order', { async: false }) work_order;
@@ -37,6 +38,12 @@ export default class MaintenanceModel extends Model {
     @attr('raw') attachments;
     @attr('raw') meta;
     @attr('string') slug;
+
+    /** @server-computed (read-only appended attributes) */
+    @attr('number') duration_hours;
+    @attr('boolean') is_overdue;
+    @attr('number') days_until_due;
+    @attr('raw') cost_breakdown;
 
     /** @dates */
     @attr('date') scheduled_at;

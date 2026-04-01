@@ -4,6 +4,7 @@ import { format as formatDate, isValid as isValidDate, formatDistanceToNow } fro
 
 export default class DeviceModel extends Model {
     /** @ids */
+    @attr('string') uuid;
     @attr('string') public_id;
     @attr('string') company_uuid;
     @attr('string') telematic_uuid;
@@ -30,7 +31,15 @@ export default class DeviceModel extends Model {
     @attr('string') imsi;
     @attr('string') firmware_version;
     @attr('string') provider;
+
+    /** @server-computed (read-only appended attributes) */
     @attr('string') photo_url;
+    @attr('string') warranty_name;
+    @attr('string') telematic_name;
+    @attr('boolean') is_online;
+    @attr('string') attached_to_name;
+    @attr('string') connection_status;
+
     @attr('string') manufacturer;
     @attr('string') serial_number;
     @attr('point') last_position;

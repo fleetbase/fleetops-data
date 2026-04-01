@@ -4,6 +4,7 @@ import { format as formatDate, isValid as isValidDate, formatDistanceToNow } fro
 
 export default class EquipmentModel extends Model {
     /** @ids */
+    @attr('string') uuid;
     @attr('string') public_id;
     @attr('string') company_uuid;
     @attr('string') warranty_uuid;
@@ -29,8 +30,13 @@ export default class EquipmentModel extends Model {
     @attr('string') currency;
     @attr('raw') meta;
     @attr('string') slug;
+    /** @server-computed (read-only appended attributes) */
     @attr('string') warranty_name;
     @attr('string') photo_url;
+    @attr('string') equipped_to_name;
+    @attr('boolean') is_equipped;
+    @attr('number') age_in_days;
+    @attr('string') depreciated_value;
 
     /** @dates */
     @attr('date') purchased_at;

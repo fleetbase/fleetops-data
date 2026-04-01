@@ -32,6 +32,12 @@ export default class WorkOrderModel extends Model {
     @attr('string') budget_code;
     @attr('raw') meta;
 
+    /** @server-computed (read-only appended attributes) */
+    @attr('boolean') is_overdue;
+    @attr('number') days_until_due;
+    @attr('number') completion_percentage;
+    @attr('number') estimated_duration;
+
     /** @dates */
     @attr('date') opened_at;
     @attr('date') due_at;
