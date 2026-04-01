@@ -23,6 +23,13 @@ export default class WorkOrderModel extends Model {
     @attr('string') priority;
     @attr('string') instructions;
     @attr('raw') checklist;
+    @attr('string') estimated_cost;
+    @attr('string') approved_budget;
+    @attr('string') actual_cost;
+    @attr('string') currency;
+    @attr('raw') cost_breakdown;
+    @attr('string') cost_center;
+    @attr('string') budget_code;
     @attr('raw') meta;
     @attr('string') slug;
 

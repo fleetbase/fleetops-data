@@ -26,8 +26,9 @@ export default class PartModel extends Model {
     @attr('string') barcode;
     @attr('string') description;
     @attr('number') quantity_on_hand;
-    @attr('number') unit_cost;
-    @attr('number') msrp;
+    @attr('string') unit_cost;
+    @attr('string') msrp;
+    @attr('string') currency;
     @attr('string') type;
     @attr('string') status;
     @attr('raw') specs;

@@ -29,10 +29,11 @@ export default class MaintenanceModel extends Model {
     @attr('string') summary;
     @attr('string') notes;
     @attr('raw') line_items;
-    @attr('number') labor_cost;
-    @attr('number') parts_cost;
-    @attr('number') tax;
-    @attr('number') total_cost;
+    @attr('string') labor_cost;
+    @attr('string') parts_cost;
+    @attr('string') tax;
+    @attr('string') total_cost;
+    @attr('string') currency;
     @attr('raw') attachments;
     @attr('raw') meta;
     @attr('string') slug;

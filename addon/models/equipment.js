@@ -25,7 +25,8 @@ export default class EquipmentModel extends Model {
     @attr('string') serial_number;
     @attr('string') manufacturer;
     @attr('string') model;
-    @attr('number') purchase_price;
+    @attr('string') purchase_price;
+    @attr('string') currency;
     @attr('raw') meta;
     @attr('string') slug;
     @attr('string') warranty_name;
