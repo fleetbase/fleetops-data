@@ -39,13 +39,14 @@ const FACILITATOR_EMBER_TO_SHORTHAND = {
 
 export default class MaintenanceScheduleSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
     /**
-     * The subject and default_assignee relationships are NOT sideloaded in the
-     * server response — only the _type and _uuid foreign keys are returned.
-     * We therefore do NOT declare them as embedded; they will be resolved from
-     * the store if already cached, or loaded lazily on demand.
+     * The subject and default_assignee relationships are always embedded in the
+     * server response via the MaintenanceSchedule resource transformer.
      */
     get attrs() {
-        return {};
+        return {
+            subject: { embedded: 'always' },
+            default_assignee: { embedded: 'always' },
+        };
     }
 
     /**

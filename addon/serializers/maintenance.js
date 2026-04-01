@@ -34,11 +34,13 @@ const PERFORMED_BY_EMBER_TO_SHORTHAND = {
 
 export default class MaintenanceSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
     /**
-     * maintainable and performed_by are NOT sideloaded in the server response.
-     * work_order and custom_field_values are embedded and should remain so.
+     * maintainable, performed_by, work_order and custom_field_values are all
+     * embedded in the server response via the Maintenance resource transformer.
      */
     get attrs() {
         return {
+            maintainable: { embedded: 'always' },
+            performed_by: { embedded: 'always' },
             work_order: { embedded: 'always' },
             custom_field_values: { embedded: 'always' },
         };

@@ -34,11 +34,15 @@ const ASSIGNEE_EMBER_TO_SHORTHAND = {
 
 export default class WorkOrderSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
     /**
-     * The target and assignee relationships are NOT sideloaded in the server
-     * response — only the _type and _uuid foreign keys are returned.
+     * The target and assignee relationships are always embedded in the server
+     * response via the WorkOrder resource transformer.
      */
     get attrs() {
-        return {};
+        return {
+            target: { embedded: 'always' },
+            assignee: { embedded: 'always' },
+            custom_field_values: { embedded: 'always' },
+        };
     }
 
     /**
