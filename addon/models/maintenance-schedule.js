@@ -57,51 +57,60 @@ export default class MaintenanceScheduleModel extends Model {
         }
         return formatDistanceToNow(this.updated_at);
     }
+
     @computed('updated_at') get updatedAt() {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
         return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
+
     @computed('updated_at') get updatedAtShort() {
         if (!isValidDate(this.updated_at)) {
             return null;
         }
         return formatDate(this.updated_at, 'dd, MMM');
     }
+
     @computed('created_at') get createdAgo() {
         if (!isValidDate(this.created_at)) {
             return null;
         }
         return formatDistanceToNow(this.created_at);
     }
+
     @computed('created_at') get createdAt() {
         if (!isValidDate(this.created_at)) {
             return null;
         }
         return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
+
     @computed('created_at') get createdAtShort() {
         if (!isValidDate(this.created_at)) {
             return null;
         }
         return formatDate(this.created_at, 'dd, MMM');
     }
+
     @computed('next_due_date') get nextDueAt() {
         if (!isValidDate(this.next_due_date)) {
             return null;
         }
         return formatDate(this.next_due_date, 'yyyy-MM-dd HH:mm');
     }
+
     @computed('next_due_date') get nextDueAtShort() {
         if (!isValidDate(this.next_due_date)) {
             return null;
         }
         return formatDate(this.next_due_date, 'dd, MMM yyyy');
     }
+
     @computed('status') get isActive() {
         return this.status === 'active';
     }
+    
     @computed('status') get isPaused() {
         return this.status === 'paused';
     }
