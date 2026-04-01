@@ -31,7 +31,6 @@ export default class WorkOrderModel extends Model {
     @attr('string') cost_center;
     @attr('string') budget_code;
     @attr('raw') meta;
-    @attr('string') slug;
 
     /** @dates */
     @attr('date') opened_at;
