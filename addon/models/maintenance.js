@@ -4,13 +4,14 @@ import { format as formatDate, isValid as isValidDate, formatDistanceToNow } fro
 
 export default class MaintenanceModel extends Model {
     /** @ids */
+    @attr('string') uuid;
     @attr('string') public_id;
     @attr('string') company_uuid;
     @attr('string') work_order_uuid;
-    @attr('string') maintainable_type;
-    @attr('string') maintainable_uuid;
-    @attr('string') performed_by_type;
-    @attr('string') performed_by_uuid;
+
+    /** @polymorphic relationships */
+    @belongsTo('maintenance-subject', { polymorphic: true, async: false }) maintainable;
+    @belongsTo('facilitator', { polymorphic: true, async: false }) performed_by;
 
     /** @relationships */
     @belongsTo('work-order', { async: false }) work_order;

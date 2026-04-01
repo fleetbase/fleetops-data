@@ -1,19 +1,17 @@
-import Model, { attr } from '@ember-data/model';
+import Model, { attr, belongsTo } from '@ember-data/model';
 import { computed } from '@ember/object';
 import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
 
 export default class WorkOrderModel extends Model {
     /** @ids */
+    @attr('string') uuid;
     @attr('string') public_id;
     @attr('string') company_uuid;
-    @attr('string') target_type;
-    @attr('string') target_uuid;
-    @attr('string') assignee_type;
-    @attr('string') assignee_uuid;
+    @attr('string') schedule_uuid;
 
-    /** @relationships */
-    // Note: relationships would be polymorphic (target, assignee)
-    // but not explicitly defined in Ember Data for morphTo
+    /** @polymorphic relationships */
+    @belongsTo('maintenance-subject', { polymorphic: true, async: false }) target;
+    @belongsTo('facilitator', { polymorphic: true, async: false }) assignee;
 
     /** @attributes */
     @attr('string') code;

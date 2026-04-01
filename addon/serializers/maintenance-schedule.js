@@ -17,16 +17,17 @@ const FACILITATOR_TYPE_MAP = {
     'fleet-ops:integrated-vendor': 'facilitator-integrated-vendor',
 };
 
-export default class WorkOrderSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
+export default class MaintenanceScheduleSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
     get attrs() {
         return {
-            target: { embedded: 'always' },
-            assignee: { embedded: 'always' },
+            subject: { embedded: 'always' },
+            default_assignee: { embedded: 'always' },
         };
     }
 
     /**
      * Normalize polymorphic type strings from the backend into Ember Data model names.
+     * Called during deserialization for each polymorphic relationship.
      */
     normalizePolymorphicType(resourceHash, relationship) {
         const key = relationship.key;
@@ -34,9 +35,9 @@ export default class WorkOrderSerializer extends ApplicationSerializer.extend(Em
         const backendType = resourceHash[typeKey];
 
         if (backendType) {
-            if (key === 'target') {
+            if (key === 'subject') {
                 resourceHash[typeKey] = MAINTENANCE_SUBJECT_TYPE_MAP[backendType] || backendType;
-            } else if (key === 'assignee') {
+            } else if (key === 'default_assignee') {
                 resourceHash[typeKey] = FACILITATOR_TYPE_MAP[backendType] || backendType;
             }
         }
@@ -46,6 +47,7 @@ export default class WorkOrderSerializer extends ApplicationSerializer.extend(Em
 
     /**
      * Serialize polymorphic type back to the backend format.
+     * Converts Ember Data model names back to 'fleet-ops:*' strings.
      */
     serializePolymorphicType(snapshot, json, relationship) {
         const key = relationship.key;
@@ -58,10 +60,10 @@ export default class WorkOrderSerializer extends ApplicationSerializer.extend(Em
 
         const modelName = belongsTo.modelName;
 
-        if (key === 'target') {
+        if (key === 'subject') {
             const reverseMap = Object.fromEntries(Object.entries(MAINTENANCE_SUBJECT_TYPE_MAP).map(([k, v]) => [v, k]));
             json[`${key}_type`] = reverseMap[modelName] || `fleet-ops:${modelName}`;
-        } else if (key === 'assignee') {
+        } else if (key === 'default_assignee') {
             const reverseMap = Object.fromEntries(Object.entries(FACILITATOR_TYPE_MAP).map(([k, v]) => [v, k]));
             json[`${key}_type`] = reverseMap[modelName] || `fleet-ops:${modelName}`;
         }
