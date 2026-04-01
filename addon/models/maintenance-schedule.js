@@ -11,6 +11,9 @@ export default class MaintenanceScheduleModel extends Model {
     /** @polymorphic relationships */
     @belongsTo('maintenance-subject', { polymorphic: true, async: false }) subject;
     @belongsTo('facilitator', { polymorphic: true, async: false }) default_assignee;
+    /** @computed names — server-side convenience fields (read-only) */
+    @attr('string') subject_name;
+    @attr('string') default_assignee_name;
 
     /** @attributes */
     @attr('string') code;

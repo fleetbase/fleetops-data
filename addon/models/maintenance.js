@@ -12,6 +12,9 @@ export default class MaintenanceModel extends Model {
     /** @polymorphic relationships */
     @belongsTo('maintenance-subject', { polymorphic: true, async: false }) maintainable;
     @belongsTo('facilitator', { polymorphic: true, async: false }) performed_by;
+    /** @computed names — server-side convenience fields (read-only) */
+    @attr('string') maintainable_name;
+    @attr('string') performed_by_name;
 
     /** @relationships */
     @belongsTo('work-order', { async: false }) work_order;

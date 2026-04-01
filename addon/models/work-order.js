@@ -12,6 +12,9 @@ export default class WorkOrderModel extends Model {
     /** @polymorphic relationships */
     @belongsTo('maintenance-subject', { polymorphic: true, async: false }) target;
     @belongsTo('facilitator', { polymorphic: true, async: false }) assignee;
+    /** @computed names — server-side convenience fields (read-only) */
+    @attr('string') target_name;
+    @attr('string') assignee_name;
 
     /** @attributes */
     @attr('string') code;

@@ -2,32 +2,55 @@ import ApplicationSerializer from '@fleetbase/ember-core/serializers/application
 import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
 
 /**
- * Type map for normalizing backend PolymorphicType strings to Ember Data model names.
- * The backend uses Laravel's PolymorphicType cast which produces strings like 'fleet-ops:vehicle'.
+ * Maps the full PHP class names returned by the backend to the Ember Data
+ * model names used by the polymorphic @belongsTo relationships.
+ *
+ * The backend serialises subject_type / default_assignee_type as the full
+ * Laravel model class name (e.g. "Fleetbase\\FleetOps\\Models\\Vehicle").
+ * Ember Data needs the dasherised model name (e.g. "maintenance-subject-vehicle").
  */
 const MAINTENANCE_SUBJECT_TYPE_MAP = {
-    'fleet-ops:vehicle': 'maintenance-subject-vehicle',
-    'fleet-ops:equipment': 'maintenance-subject-equipment',
+    'Fleetbase\\FleetOps\\Models\\Vehicle': 'maintenance-subject-vehicle',
+    'Fleetbase\\FleetOps\\Models\\Equipment': 'maintenance-subject-equipment',
 };
 
 const FACILITATOR_TYPE_MAP = {
-    'fleet-ops:driver': 'facilitator-contact',
-    'fleet-ops:contact': 'facilitator-contact',
-    'fleet-ops:vendor': 'facilitator-vendor',
-    'fleet-ops:integrated-vendor': 'facilitator-integrated-vendor',
+    'Fleetbase\\FleetOps\\Models\\Vendor': 'facilitator-vendor',
+    'Fleetbase\\FleetOps\\Models\\Contact': 'facilitator-contact',
+    'Fleetbase\\FleetOps\\Models\\IntegratedVendor': 'facilitator-integrated-vendor',
+    'Fleetbase\\FleetOps\\Models\\Driver': 'facilitator-contact',
+};
+
+/**
+ * Maps the Ember Data model name back to the shorthand type string that the
+ * backend accepts on create/update.  The server converts "fleet-ops:vehicle"
+ * to the correct PHP namespace internally.
+ */
+const SUBJECT_EMBER_TO_SHORTHAND = {
+    'maintenance-subject-vehicle': 'fleet-ops:vehicle',
+    'maintenance-subject-equipment': 'fleet-ops:equipment',
+};
+
+const FACILITATOR_EMBER_TO_SHORTHAND = {
+    'facilitator-vendor': 'fleet-ops:vendor',
+    'facilitator-contact': 'fleet-ops:contact',
+    'facilitator-integrated-vendor': 'fleet-ops:integrated-vendor',
 };
 
 export default class MaintenanceScheduleSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
+    /**
+     * The subject and default_assignee relationships are NOT sideloaded in the
+     * server response — only the _type and _uuid foreign keys are returned.
+     * We therefore do NOT declare them as embedded; they will be resolved from
+     * the store if already cached, or loaded lazily on demand.
+     */
     get attrs() {
-        return {
-            subject: { embedded: 'always' },
-            default_assignee: { embedded: 'always' },
-        };
+        return {};
     }
 
     /**
-     * Normalize polymorphic type strings from the backend into Ember Data model names.
-     * Called during deserialization for each polymorphic relationship.
+     * Normalise polymorphic type strings from the backend into Ember Data model
+     * names.  Called during deserialisation for each polymorphic relationship.
      */
     normalizePolymorphicType(resourceHash, relationship) {
         const key = relationship.key;
@@ -36,9 +59,9 @@ export default class MaintenanceScheduleSerializer extends ApplicationSerializer
 
         if (backendType) {
             if (key === 'subject') {
-                resourceHash[typeKey] = MAINTENANCE_SUBJECT_TYPE_MAP[backendType] || backendType;
+                resourceHash[typeKey] = MAINTENANCE_SUBJECT_TYPE_MAP[backendType] ?? backendType;
             } else if (key === 'default_assignee') {
-                resourceHash[typeKey] = FACILITATOR_TYPE_MAP[backendType] || backendType;
+                resourceHash[typeKey] = FACILITATOR_TYPE_MAP[backendType] ?? backendType;
             }
         }
 
@@ -46,8 +69,8 @@ export default class MaintenanceScheduleSerializer extends ApplicationSerializer
     }
 
     /**
-     * Serialize polymorphic type back to the backend format.
-     * Converts Ember Data model names back to 'fleet-ops:*' strings.
+     * Serialise the polymorphic type back to the shorthand string the backend
+     * expects on create / update (e.g. "fleet-ops:vehicle").
      */
     serializePolymorphicType(snapshot, json, relationship) {
         const key = relationship.key;
@@ -61,11 +84,9 @@ export default class MaintenanceScheduleSerializer extends ApplicationSerializer
         const modelName = belongsTo.modelName;
 
         if (key === 'subject') {
-            const reverseMap = Object.fromEntries(Object.entries(MAINTENANCE_SUBJECT_TYPE_MAP).map(([k, v]) => [v, k]));
-            json[`${key}_type`] = reverseMap[modelName] || `fleet-ops:${modelName}`;
+            json[`${key}_type`] = SUBJECT_EMBER_TO_SHORTHAND[modelName] ?? `fleet-ops:${modelName}`;
         } else if (key === 'default_assignee') {
-            const reverseMap = Object.fromEntries(Object.entries(FACILITATOR_TYPE_MAP).map(([k, v]) => [v, k]));
-            json[`${key}_type`] = reverseMap[modelName] || `fleet-ops:${modelName}`;
+            json[`${key}_type`] = FACILITATOR_EMBER_TO_SHORTHAND[modelName] ?? `fleet-ops:${modelName}`;
         }
     }
 }
