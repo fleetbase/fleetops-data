@@ -50,6 +50,9 @@ export default class MaintenanceScheduleModel extends Model {
     @attr('raw') meta;
     @attr('string') slug;
 
+    /** @reminders — array of integer day offsets, e.g. [15, 7, 3] */
+    @attr('raw') reminder_offsets;
+
     /** @dates */
     @attr('date') last_triggered_at;
     @attr('date') deleted_at;
