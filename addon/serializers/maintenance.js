@@ -59,7 +59,10 @@ export default class MaintenanceSerializer extends ApplicationSerializer.extend(
                 // Strip abstract subtype prefixes so the server receives the bare model type
                 // e.g. 'facilitator-vendor' -> 'vendor', 'maintenance-subject-vehicle' -> 'vehicle'
                 if (typeof type === 'string') {
-                    type = type.replace(/^facilitator-/, '').replace(/^maintenance-subject-/, '').replace(/^customer-/, '');
+                    type = type
+                        .replace(/^facilitator-/, '')
+                        .replace(/^maintenance-subject-/, '')
+                        .replace(/^customer-/, '');
                 }
                 json[key + '_type'] = `fleet-ops:${type}`;
             }
