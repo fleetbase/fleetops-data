@@ -75,20 +75,27 @@ export default class OrderSerializer extends ApplicationSerializer.extend(Embedd
     serializePolymorphicType(snapshot, json, relationship) {
         let key = relationship.key;
         let belongsTo = snapshot.belongsTo(key);
-        let type = belongsTo.modelName;
 
         // if snapshot already has type filled respect manual input
         const isPolymorphicTypeBlank = isBlank(snapshot.attr(key + '_type'));
         if (isPolymorphicTypeBlank) {
             key = this.keyForAttribute ? this.keyForAttribute(key, 'serialize') : key;
 
-            if (!isBlank(belongsTo.attr(`${key}_type`))) {
-                type = belongsTo.attr(`${key}_type`);
-            }
-
             if (!belongsTo) {
                 json[key + '_type'] = null;
             } else {
+                let type = belongsTo.modelName;
+                if (!isBlank(belongsTo.attr(`${key}_type`))) {
+                    type = belongsTo.attr(`${key}_type`);
+                }
+                // Strip abstract subtype prefixes so the server receives the bare model type
+                // e.g. 'facilitator-vendor' -> 'vendor', 'customer-contact' -> 'contact'
+                if (typeof type === 'string') {
+                    type = type
+                        .replace(/^facilitator-/, '')
+                        .replace(/^customer-/, '')
+                        .replace(/^maintenance-subject-/, '');
+                }
                 json[key + '_type'] = `fleet-ops:${type}`;
             }
         }

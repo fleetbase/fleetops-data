@@ -31,6 +31,11 @@ export default class DriverModel extends Model {
     @belongsTo('vendor', { async: true }) vendor;
     @hasMany('custom-field-value', { async: false }) custom_field_values;
 
+    /** @scheduling-relationships */
+    @hasMany('schedule', { async: true }) schedules;
+    @hasMany('schedule-item', { async: true }) schedule_items;
+    @hasMany('schedule-availability', { async: true }) availabilities;
+
     /** @attributes */
     @attr('string') name;
     @attr('string') phone;

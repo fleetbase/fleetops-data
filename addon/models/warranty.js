@@ -4,6 +4,7 @@ import { format as formatDate, isValid as isValidDate, formatDistanceToNow } fro
 
 export default class WarrantyModel extends Model {
     /** @ids */
+    @attr('string') uuid;
     @attr('string') public_id;
     @attr('string') company_uuid;
     @attr('string') subject_type;
@@ -21,7 +22,15 @@ export default class WarrantyModel extends Model {
     @attr('raw') policy;
     @attr('raw') meta;
     @attr('string') slug;
+
+    /** @server-computed (read-only appended attributes) */
     @attr('string') vendor_name;
+    @attr('string') subject_name;
+    @attr('boolean') is_active;
+    @attr('boolean') is_expired;
+    @attr('number') days_remaining;
+    @attr('string') coverage_summary;
+    @attr('string') status;
 
     /** @dates */
     @attr('date') start_date;
