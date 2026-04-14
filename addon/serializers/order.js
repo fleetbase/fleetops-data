@@ -91,7 +91,10 @@ export default class OrderSerializer extends ApplicationSerializer.extend(Embedd
                 // Strip abstract subtype prefixes so the server receives the bare model type
                 // e.g. 'facilitator-vendor' -> 'vendor', 'customer-contact' -> 'contact'
                 if (typeof type === 'string') {
-                    type = type.replace(/^facilitator-/, '').replace(/^customer-/, '').replace(/^maintenance-subject-/, '');
+                    type = type
+                        .replace(/^facilitator-/, '')
+                        .replace(/^customer-/, '')
+                        .replace(/^maintenance-subject-/, '');
                 }
                 json[key + '_type'] = `fleet-ops:${type}`;
             }
