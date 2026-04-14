@@ -21,4 +21,13 @@ export default class WaypointModel extends PlaceModel {
     @attr('string') status_code;
     @attr('string') type;
     @attr('number') order;
+    // Orchestrator time windows
+    @attr('date') time_window_start;
+    @attr('date') time_window_end;
+    @attr('number') service_time;
+    // Per-stop POD and notes (mirrors order-level fields;
+    // used as fallback until per-waypoint POD is implemented in driver app)
+    @attr('string') notes;
+    @attr('string') pod_method;
+    @attr('boolean') pod_required;
 }
