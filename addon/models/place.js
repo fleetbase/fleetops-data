@@ -46,6 +46,13 @@ export default class PlaceModel extends Model {
     location;
     @attr('raw') meta;
 
+    /** @operational (Phase 2) */
+    @attr('string') location_type;
+    @attr('boolean') appointment_required;
+    @attr('string') contact_name;
+    @attr('string') contact_phone;
+    @attr('string') contact_email;
+
     /** @dates */
     @attr('date') deleted_at;
     @attr('date') created_at;

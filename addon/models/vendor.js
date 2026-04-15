@@ -41,6 +41,17 @@ export default class VendorModel extends Model {
     @attr('raw') meta;
     @attr('raw') callbacks;
 
+    /** @freight (Phase 2) */
+    @attr('string') scac_code;
+    @attr('string') mc_number;
+    @attr('string') dot_number;
+    @attr('date') insurance_expiry;
+    @attr('number') insurance_amount;
+    @attr('number') payment_terms_days;
+    @attr('string') default_payment_method;
+    @attr('string') carrier_type;
+    @attr('boolean') is_preferred;
+
     /** @dates */
     @attr('date') deleted_at;
     @attr('date') created_at;

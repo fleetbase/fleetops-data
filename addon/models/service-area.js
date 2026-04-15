@@ -22,6 +22,10 @@ export default class ServiceAreaModel extends Model {
     @attr('multi-polygon') border;
     @attr('point') center;
 
+    /** @scoping (Phase 2) */
+    @attr('raw') states_list;
+    @attr('raw') zip_ranges;
+
     /** @dates */
     @attr('date') deleted_at;
     @attr('date') created_at;
