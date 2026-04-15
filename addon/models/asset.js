@@ -4,6 +4,7 @@ import { format as formatDate, isValid as isValidDate, formatDistanceToNow } fro
 
 export default class AssetModel extends Model {
     /** @ids */
+    @attr('string') uuid;
     @attr('string') public_id;
     @attr('string') company_uuid;
     @attr('string') category_uuid;
@@ -63,11 +64,16 @@ export default class AssetModel extends Model {
     @attr('raw') attributes;
     @attr('string') notes;
     @attr('string') slug;
+    /** @server-computed (read-only appended attributes) */
     @attr('string') photo_url;
     @attr('string') display_name;
     @attr('string') category_name;
     @attr('string') vendor_name;
     @attr('string') warranty_name;
+    @attr('string') current_location;
+    @attr('boolean') is_online;
+    @attr('date') last_maintenance;
+    @attr('date') next_maintenance_due;
 
     /** @dates */
     @attr('date') deleted_at;

@@ -4,13 +4,18 @@ import { format as formatDate, isValid as isValidDate, formatDistanceToNow } fro
 
 export default class MaintenanceModel extends Model {
     /** @ids */
+    @attr('string') uuid;
     @attr('string') public_id;
     @attr('string') company_uuid;
     @attr('string') work_order_uuid;
-    @attr('string') maintainable_type;
-    @attr('string') maintainable_uuid;
-    @attr('string') performed_by_type;
-    @attr('string') performed_by_uuid;
+
+    /** @polymorphic relationships */
+    @belongsTo('maintenance-subject', { polymorphic: true, async: false }) maintainable;
+    @belongsTo('facilitator', { polymorphic: true, async: false }) performed_by;
+    /** @computed names — server-side convenience fields (read-only) */
+    @attr('string') maintainable_name;
+    @attr('string') performed_by_name;
+    @attr('string') work_order_subject;
 
     /** @relationships */
     @belongsTo('work-order', { async: false }) work_order;
@@ -25,13 +30,20 @@ export default class MaintenanceModel extends Model {
     @attr('string') summary;
     @attr('string') notes;
     @attr('raw') line_items;
-    @attr('number') labor_cost;
-    @attr('number') parts_cost;
-    @attr('number') tax;
-    @attr('number') total_cost;
+    @attr('string') labor_cost;
+    @attr('string') parts_cost;
+    @attr('string') tax;
+    @attr('string') total_cost;
+    @attr('string') currency;
     @attr('raw') attachments;
     @attr('raw') meta;
     @attr('string') slug;
+
+    /** @server-computed (read-only appended attributes) */
+    @attr('number') duration_hours;
+    @attr('boolean') is_overdue;
+    @attr('number') days_until_due;
+    @attr('raw') cost_breakdown;
 
     /** @dates */
     @attr('date') scheduled_at;

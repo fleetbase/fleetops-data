@@ -2,7 +2,7 @@ import ApplicationSerializer from '@fleetbase/ember-core/serializers/application
 import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
 import { isBlank } from '@ember/utils';
 
-export default class WorkOrderSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
+export default class MaintenanceScheduleSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
     /**
      * Embedded relationship attributes.
      *
@@ -10,9 +10,8 @@ export default class WorkOrderSerializer extends ApplicationSerializer.extend(Em
      */
     get attrs() {
         return {
-            target: { embedded: 'always' },
-            assignee: { embedded: 'always' },
-            custom_field_values: { embedded: 'always' },
+            subject: { embedded: 'always' },
+            default_assignee: { embedded: 'always' },
         };
     }
 
@@ -25,13 +24,13 @@ export default class WorkOrderSerializer extends ApplicationSerializer.extend(Em
      */
     serialize(snapshot, options) {
         const json = super.serialize(snapshot, options);
-        const readOnly = ['target_name', 'assignee_name', 'is_overdue', 'days_until_due', 'completion_percentage'];
+        const readOnly = ['subject_name', 'default_assignee_name'];
         readOnly.forEach((attr) => delete json[attr]);
         return json;
     }
 
     /**
-     * Serialize the polymorphic type for target and assignee relationships.
+     * Serialize the polymorphic type for subject and default_assignee relationships.
      *
      * The embedded record's modelName will be the concrete subtype (e.g. 'facilitator-vendor',
      * 'maintenance-subject-vehicle'). We strip the abstract prefix before sending to the server

@@ -1,19 +1,20 @@
-import Model, { attr } from '@ember-data/model';
+import Model, { attr, belongsTo } from '@ember-data/model';
 import { computed } from '@ember/object';
 import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
 
 export default class WorkOrderModel extends Model {
     /** @ids */
+    @attr('string') uuid;
     @attr('string') public_id;
     @attr('string') company_uuid;
-    @attr('string') target_type;
-    @attr('string') target_uuid;
-    @attr('string') assignee_type;
-    @attr('string') assignee_uuid;
+    @attr('string') schedule_uuid;
 
-    /** @relationships */
-    // Note: relationships would be polymorphic (target, assignee)
-    // but not explicitly defined in Ember Data for morphTo
+    /** @polymorphic relationships */
+    @belongsTo('maintenance-subject', { polymorphic: true, async: false }) target;
+    @belongsTo('facilitator', { polymorphic: true, async: false }) assignee;
+    /** @computed names — server-side convenience fields (read-only) */
+    @attr('string') target_name;
+    @attr('string') assignee_name;
 
     /** @attributes */
     @attr('string') code;
@@ -22,8 +23,20 @@ export default class WorkOrderModel extends Model {
     @attr('string') priority;
     @attr('string') instructions;
     @attr('raw') checklist;
+    @attr('string') estimated_cost;
+    @attr('string') approved_budget;
+    @attr('string') actual_cost;
+    @attr('string') currency;
+    @attr('raw') cost_breakdown;
+    @attr('string') cost_center;
+    @attr('string') budget_code;
     @attr('raw') meta;
-    @attr('string') slug;
+
+    /** @server-computed (read-only appended attributes) */
+    @attr('boolean') is_overdue;
+    @attr('number') days_until_due;
+    @attr('number') completion_percentage;
+    @attr('number') estimated_duration;
 
     /** @dates */
     @attr('date') opened_at;

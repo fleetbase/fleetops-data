@@ -4,6 +4,7 @@ import { format as formatDate, isValid as isValidDate, formatDistanceToNow } fro
 
 export default class PartModel extends Model {
     /** @ids */
+    @attr('string') uuid;
     @attr('string') public_id;
     @attr('string') company_uuid;
     @attr('string') vendor_uuid;
@@ -26,16 +27,22 @@ export default class PartModel extends Model {
     @attr('string') barcode;
     @attr('string') description;
     @attr('number') quantity_on_hand;
-    @attr('number') unit_cost;
-    @attr('number') msrp;
+    @attr('string') unit_cost;
+    @attr('string') msrp;
+    @attr('string') currency;
     @attr('string') type;
     @attr('string') status;
     @attr('raw') specs;
     @attr('raw') meta;
     @attr('string') slug;
+    /** @server-computed (read-only appended attributes) */
     @attr('string') vendor_name;
     @attr('string') warranty_name;
     @attr('string') photo_url;
+    @attr('string') total_value;
+    @attr('boolean') is_in_stock;
+    @attr('boolean') is_low_stock;
+    @attr('string') asset_name;
 
     /** @dates */
     @attr('date') deleted_at;

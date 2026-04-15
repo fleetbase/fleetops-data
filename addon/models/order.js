@@ -22,6 +22,7 @@ export default class OrderModel extends Model {
     @attr('string') purchase_rate_uuid;
     @attr('string') tracking_number_uuid;
     @attr('string') driver_assigned_uuid;
+    @attr('string') manifest_uuid;
     @attr('string') service_quote_uuid;
     @attr('string') order_config_uuid;
     @attr('string') payload_id;
@@ -37,6 +38,7 @@ export default class OrderModel extends Model {
     @belongsTo('payload', { async: false }) payload;
     @belongsTo('driver', { async: false, inverse: 'jobs' }) driver_assigned;
     @belongsTo('vehicle', { async: false }) vehicle_assigned;
+    @belongsTo('manifest', { async: false }) manifest;
     @belongsTo('route', { async: false }) route;
     @belongsTo('purchase-rate', { async: false }) purchase_rate;
     @belongsTo('tracking-number', { async: false }) tracking_number;

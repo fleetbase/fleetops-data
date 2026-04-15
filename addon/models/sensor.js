@@ -4,6 +4,7 @@ import { format as formatDate, isValid as isValidDate, formatDistanceToNow } fro
 
 export default class SensorModel extends Model {
     /** @ids */
+    @attr('string') uuid;
     @attr('string') public_id;
     @attr('string') company_uuid;
     @attr('string') telematic_uuid;
@@ -21,7 +22,6 @@ export default class SensorModel extends Model {
 
     /** @attributes */
     @attr('string') name;
-    @attr('string') photo_url;
     @attr('string') internal_id;
     @attr('string') type;
     @attr('string') serial_number;
@@ -29,11 +29,9 @@ export default class SensorModel extends Model {
     @attr('string') imsi;
     @attr('string') firmware_version;
     @attr('string') unit;
-    @attr('string') threshold_status;
     @attr('number') min_threshold;
     @attr('number') max_threshold;
     @attr('boolean') threshold_inclusive;
-    @attr('boolean') is_active;
     @attr('string') last_value;
     @attr('number') report_frequency_sec;
     @attr('point') last_position;
@@ -41,6 +39,11 @@ export default class SensorModel extends Model {
     @attr('object') meta;
     @attr('string') slug;
     @attr('string', { defaultValue: 'inactive' }) status;
+
+    /** @server-computed (read-only appended attributes) */
+    @attr('string') photo_url;
+    @attr('boolean') is_active;
+    @attr('string') threshold_status;
 
     /** @dates */
     @attr('date') last_reading_at;
