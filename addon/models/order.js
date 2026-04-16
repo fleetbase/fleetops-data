@@ -94,6 +94,12 @@ export default class OrderModel extends Model {
     @attr('raw') tracker_data;
     @attr('raw') eta;
 
+    /** Orchestrator constraints */
+    @attr('date') time_window_start;
+    @attr('date') time_window_end;
+    @attr('raw') required_skills;
+    @attr('number') orchestrator_priority;
+
     /** @dates */
     @attr('date') scheduled_at;
     @attr('date') dispatched_at;

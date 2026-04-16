@@ -98,10 +98,20 @@ export default class VehicleModel extends Model {
     @attr('number') height;
     @attr('number') towing_capacity;
     @attr('number') payload_capacity;
+    @attr('number') payload_capacity_volume;
+    @attr('number') payload_capacity_pallets;
+    @attr('number') payload_capacity_parcels;
     @attr('number') seating_capacity;
     @attr('number') ground_clearance;
     @attr('number') bed_length;
     @attr('number') fuel_capacity;
+
+    /** Orchestrator constraints */
+    @attr('raw') skills;
+    @attr('number') max_tasks;
+    @attr('string') time_window_start;
+    @attr('string') time_window_end;
+    @attr('boolean') return_to_depot;
 
     /** Regulatory / compliance */
     @attr('string') emission_standard;
