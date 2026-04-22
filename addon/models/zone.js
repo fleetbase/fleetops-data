@@ -17,6 +17,10 @@ export default class ZoneModel extends Model {
     @attr('string') color;
     @attr('string') stroke_color;
     @attr('string') status;
+    @attr('boolean') trigger_on_entry;
+    @attr('boolean') trigger_on_exit;
+    @attr('number') dwell_threshold_minutes;
+    @attr('number') speed_limit_kmh;
     @attr('polygon') border;
     @attr('point') center;
 
