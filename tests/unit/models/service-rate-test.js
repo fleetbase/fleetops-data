@@ -50,4 +50,45 @@ module('Unit | Model | service rate', function (hooks) {
             [0, 1]
         );
     });
+
+    test('parcelFees prefers persisted parcel fees over duplicate unsaved defaults', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serviceRate = store.createRecord('service-rate', {
+            rate_calculation_method: 'parcel',
+        });
+
+        const unsavedDefault = store.createRecord('service-rate-parcel-fee', {
+            size: 'small',
+            length: 34,
+            width: 18,
+            height: 10,
+            dimensions_unit: 'cm',
+            weight: 2,
+            weight_unit: 'kg',
+            fee: 0,
+        });
+
+        const persistedFee = store.push({
+            data: {
+                type: 'service-rate-parcel-fee',
+                id: 'parcel-fee-1',
+                attributes: {
+                    size: 'small',
+                    length: '34',
+                    width: '18',
+                    height: '10',
+                    dimensions_unit: 'cm',
+                    weight: '2',
+                    weight_unit: 'kg',
+                    fee: '5',
+                },
+            },
+        });
+
+        serviceRate.parcel_fees.pushObjects([unsavedDefault, persistedFee]);
+
+        assert.strictEqual(serviceRate.parcelFees.length, 1);
+        assert.strictEqual(serviceRate.parcelFees[0].id, 'parcel-fee-1');
+        assert.strictEqual(serviceRate.parcelFees[0].fee, '5');
+    });
 });

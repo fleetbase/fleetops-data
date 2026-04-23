@@ -128,6 +128,38 @@ export default class ServiceRate extends Model {
         return existing.filter((r) => r.distance !== null && r.distance !== undefined && r.distance >= 0 && r.distance < n).sort((a, b) => a.distance - b.distance);
     }
 
+    @computed('parcel_fees.@each.{size,length,width,height,dimensions_unit,weight,weight_unit,fee,id}') get parcelFees() {
+        const existing = (this.parcel_fees?.toArray?.() ?? []).filter((fee) => !fee.isDeleted);
+        const deduped = new Map();
+
+        const feeKey = (fee) => {
+            return [fee.size, fee.length, fee.width, fee.height, fee.dimensions_unit, fee.weight, fee.weight_unit].join(':');
+        };
+
+        const rankFee = (fee) => {
+            if (fee.id && !fee.isNew) {
+                return 3;
+            }
+
+            if (!fee.isNew) {
+                return 2;
+            }
+
+            return 1;
+        };
+
+        existing.forEach((fee) => {
+            const key = feeKey(fee);
+            const current = deduped.get(key);
+
+            if (!current || rankFee(fee) > rankFee(current)) {
+                deduped.set(key, fee);
+            }
+        });
+
+        return Array.from(deduped.values());
+    }
+
     /** @methods */
     @action createDefaultPerDropFee(attributes = {}) {
         const store = getOwner(this).lookup('service:store');
