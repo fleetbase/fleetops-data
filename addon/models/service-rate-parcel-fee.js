@@ -4,6 +4,7 @@ import { format as formatDate, isValid as isValidDate, formatDistanceToNow } fro
 
 export default class ServiceRateParcelFeeModel extends Model {
     /** @ids */
+    @attr('string') uuid;
     @attr('string') service_rate_uuid;
 
     /** @attributes */
@@ -68,6 +69,7 @@ export default class ServiceRateParcelFeeModel extends Model {
     /** @methods */
     toJSON() {
         return {
+            uuid: this.uuid,
             service_rate_uuid: this.service_rate_uuid,
             size: this.size,
             length: this.length,
