@@ -120,7 +120,31 @@ export default class ServiceRate extends Model {
         const existing = (this.rate_fees?.toArray?.() ?? []).filter((r) => !r.isDeleted);
 
         if (this.isPerDrop) {
-            return existing.filter((r) => r.unit === 'waypoint').sort((a, b) => (a.min ?? 0) - (b.min ?? 0));
+            const deduped = new Map();
+            const rankFee = (fee) => {
+                if (fee.id && !fee.isNew) {
+                    return 3;
+                }
+
+                if (!fee.isNew) {
+                    return 2;
+                }
+
+                return 1;
+            };
+
+            existing
+                .filter((r) => r.unit === 'waypoint')
+                .forEach((fee) => {
+                    const key = `drop:${fee.min}:${fee.max}:${fee.unit}`;
+                    const current = deduped.get(key);
+
+                    if (!current || rankFee(fee) > rankFee(current)) {
+                        deduped.set(key, fee);
+                    }
+                });
+
+            return Array.from(deduped.values()).sort((a, b) => (a.min ?? 0) - (b.min ?? 0));
         }
 
         const n = Math.max(0, Number(this.max_distance) || 0);

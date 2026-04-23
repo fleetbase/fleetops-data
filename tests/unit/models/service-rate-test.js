@@ -115,4 +115,37 @@ module('Unit | Model | service rate', function (hooks) {
         assert.strictEqual(addedFee.min, 3);
         assert.strictEqual(addedFee.max, 8);
     });
+
+    test('rateFees prefers persisted per-drop fees over duplicate unsaved rows', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serviceRate = store.createRecord('service-rate', {
+            rate_calculation_method: 'per_drop',
+        });
+
+        const unsavedDefault = store.createRecord('service-rate-fee', {
+            min: 1,
+            max: 5,
+            unit: 'waypoint',
+            fee: 0,
+        });
+
+        const persistedFee = store.push({
+            data: {
+                type: 'service-rate-fee',
+                id: 'rate-fee-1',
+                attributes: {
+                    min: 1,
+                    max: 5,
+                    unit: 'waypoint',
+                    fee: '5',
+                },
+            },
+        });
+
+        serviceRate.rate_fees.pushObjects([unsavedDefault, persistedFee]);
+
+        assert.strictEqual(serviceRate.rateFees.length, 1);
+        assert.strictEqual(serviceRate.rateFees[0].id, 'rate-fee-1');
+        assert.strictEqual(serviceRate.rateFees[0].fee, '5');
+    });
 });
