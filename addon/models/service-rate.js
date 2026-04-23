@@ -116,12 +116,16 @@ export default class ServiceRate extends Model {
         return this.cod_calculation_method === 'percentage';
     }
 
-    @computed('rate_fees.@each.distance', 'max_distance') get rateFees() {
-        const n = Math.max(0, Number(this.max_distance) || 0);
-        const existing = (this.rate_fees?.toArray?.() ?? []).filter((r) => r.distance !== null && r.distance !== undefined && !r.isDeleted);
+    @computed('rate_fees.@each.{distance,min,max,unit}', 'max_distance', 'rate_calculation_method', 'isPerDrop') get rateFees() {
+        const existing = (this.rate_fees?.toArray?.() ?? []).filter((r) => !r.isDeleted);
 
-        // Return existing fees sorted by distance, filtered by max_distance
-        return existing.filter((r) => r.distance >= 0 && r.distance < n).sort((a, b) => a.distance - b.distance);
+        if (this.isPerDrop) {
+            return existing.filter((r) => r.unit === 'waypoint').sort((a, b) => (a.min ?? 0) - (b.min ?? 0));
+        }
+
+        const n = Math.max(0, Number(this.max_distance) || 0);
+
+        return existing.filter((r) => r.distance !== null && r.distance !== undefined && r.distance >= 0 && r.distance < n).sort((a, b) => a.distance - b.distance);
     }
 
     /** @methods */
