@@ -177,7 +177,8 @@ export default class ServiceRate extends Model {
         const store = getOwner(this).lookup('service:store');
         const existingFees = this.rate_fees?.toArray?.() ?? [];
         const last = existingFees[existingFees.length - 1];
-        const min = last ? last.max + 1 : 1;
+        const lastMax = Number(last?.max) || 0;
+        const min = last ? lastMax + 1 : 1;
         const max = min + 5;
 
         const newFee = store.createRecord('service-rate-fee', {

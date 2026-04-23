@@ -91,4 +91,28 @@ module('Unit | Model | service rate', function (hooks) {
         assert.strictEqual(serviceRate.parcelFees[0].id, 'parcel-fee-1');
         assert.strictEqual(serviceRate.parcelFees[0].fee, '5');
     });
+
+    test('addPerDropRateFee increments numeric ranges even when existing values are strings', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serviceRate = store.createRecord('service-rate', {
+            rate_calculation_method: 'per_drop',
+            currency: 'USD',
+        });
+
+        serviceRate.rate_fees.pushObject(
+            store.createRecord('service-rate-fee', {
+                min: '1',
+                max: '2',
+                unit: 'waypoint',
+                fee: 100,
+            })
+        );
+
+        serviceRate.addPerDropRateFee();
+
+        const addedFee = serviceRate.rate_fees[1];
+
+        assert.strictEqual(addedFee.min, 3);
+        assert.strictEqual(addedFee.max, 8);
+    });
 });
