@@ -139,7 +139,7 @@ export default class ServiceRate extends Model {
                     const key = `drop:${fee.min}:${fee.max}:${fee.unit}`;
                     const current = deduped.get(key);
 
-                    if (!current || rankFee(fee) > rankFee(current)) {
+                    if (!current || rankFee(fee) >= rankFee(current)) {
                         deduped.set(key, fee);
                     }
                 });
@@ -176,7 +176,7 @@ export default class ServiceRate extends Model {
             const key = feeKey(fee);
             const current = deduped.get(key);
 
-            if (!current || rankFee(fee) > rankFee(current)) {
+            if (!current || rankFee(fee) >= rankFee(current)) {
                 deduped.set(key, fee);
             }
         });

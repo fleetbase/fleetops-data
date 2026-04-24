@@ -92,6 +92,43 @@ module('Unit | Model | service rate', function (hooks) {
         assert.strictEqual(serviceRate.parcelFees[0].fee, '5');
     });
 
+    test('parcelFees prefers the latest duplicate persisted parcel fee in store state', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serviceRate = store.createRecord('service-rate', {
+            rate_calculation_method: 'parcel',
+        });
+
+        const staleFee = store.createRecord('service-rate-parcel-fee', {
+            size: 'small',
+            length: 34,
+            width: 18,
+            height: 10,
+            dimensions_unit: 'cm',
+            weight: 2,
+            weight_unit: 'kg',
+            fee: '0',
+        });
+        staleFee.set('id', 'parcel-fee-stale');
+
+        const updatedFee = store.createRecord('service-rate-parcel-fee', {
+            size: 'small',
+            length: 34,
+            width: 18,
+            height: 10,
+            dimensions_unit: 'cm',
+            weight: 2,
+            weight_unit: 'kg',
+            fee: '12',
+        });
+        updatedFee.set('id', 'parcel-fee-updated');
+
+        serviceRate.parcel_fees.pushObjects([staleFee, updatedFee]);
+
+        assert.strictEqual(serviceRate.parcelFees.length, 1);
+        assert.strictEqual(serviceRate.parcelFees[0].id, 'parcel-fee-updated');
+        assert.strictEqual(serviceRate.parcelFees[0].fee, '12');
+    });
+
     test('addPerDropRateFee increments numeric ranges even when existing values are strings', function (assert) {
         const store = this.owner.lookup('service:store');
         const serviceRate = store.createRecord('service-rate', {
