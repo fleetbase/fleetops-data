@@ -38,12 +38,24 @@ export default class ServiceRateSerializer extends ApplicationSerializer.extend(
                     const savedRateFees = allRateFees.filter((f) => !f.isNew);
                     const unsavedRateFees = allRateFees.filter((f) => f.isNew);
 
-                    // Create a map of saved fees by distance
-                    const savedByDistance = new Map(savedRateFees.map((f) => [f.distance, f]));
+                    // Create a map of saved fees using the most stable key for the fee shape.
+                    const savedFeeKey = (fee) => {
+                        if (fee.id) {
+                            return `id:${fee.id}`;
+                        }
+
+                        if (fee.unit === 'waypoint') {
+                            return `drop:${fee.min}:${fee.max}:${fee.unit}`;
+                        }
+
+                        return `distance:${fee.distance}`;
+                    };
+
+                    const savedByKey = new Map(savedRateFees.map((f) => [savedFeeKey(f), f]));
 
                     // Only remove unsaved fees that duplicate saved fees
                     unsavedRateFees.forEach((fee) => {
-                        if (savedByDistance.has(fee.distance)) {
+                        if (savedByKey.has(savedFeeKey(fee))) {
                             serviceRate.get('rate_fees').removeObject(fee);
                             fee.unloadRecord();
                         }

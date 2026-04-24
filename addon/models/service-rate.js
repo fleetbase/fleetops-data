@@ -116,12 +116,72 @@ export default class ServiceRate extends Model {
         return this.cod_calculation_method === 'percentage';
     }
 
-    @computed('rate_fees.@each.distance', 'max_distance') get rateFees() {
-        const n = Math.max(0, Number(this.max_distance) || 0);
-        const existing = (this.rate_fees?.toArray?.() ?? []).filter((r) => r.distance !== null && r.distance !== undefined && !r.isDeleted);
+    @computed('rate_fees.@each.{distance,min,max,unit}', 'max_distance', 'rate_calculation_method', 'isPerDrop') get rateFees() {
+        const existing = (this.rate_fees?.toArray?.() ?? []).filter((r) => !r.isDeleted);
 
-        // Return existing fees sorted by distance, filtered by max_distance
-        return existing.filter((r) => r.distance >= 0 && r.distance < n).sort((a, b) => a.distance - b.distance);
+        if (this.isPerDrop) {
+            const deduped = new Map();
+            const rankFee = (fee) => {
+                if (fee.id && !fee.isNew) {
+                    return 3;
+                }
+
+                if (!fee.isNew) {
+                    return 2;
+                }
+
+                return 1;
+            };
+
+            existing
+                .filter((r) => r.unit === 'waypoint')
+                .forEach((fee) => {
+                    const key = `drop:${fee.min}:${fee.max}:${fee.unit}`;
+                    const current = deduped.get(key);
+
+                    if (!current || rankFee(fee) >= rankFee(current)) {
+                        deduped.set(key, fee);
+                    }
+                });
+
+            return Array.from(deduped.values()).sort((a, b) => (a.min ?? 0) - (b.min ?? 0));
+        }
+
+        const n = Math.max(0, Number(this.max_distance) || 0);
+
+        return existing.filter((r) => r.distance !== null && r.distance !== undefined && r.distance >= 0 && r.distance < n).sort((a, b) => a.distance - b.distance);
+    }
+
+    @computed('parcel_fees.@each.{size,length,width,height,dimensions_unit,weight,weight_unit,fee,id}') get parcelFees() {
+        const existing = (this.parcel_fees?.toArray?.() ?? []).filter((fee) => !fee.isDeleted);
+        const deduped = new Map();
+
+        const feeKey = (fee) => {
+            return [fee.size, fee.length, fee.width, fee.height, fee.dimensions_unit, fee.weight, fee.weight_unit].join(':');
+        };
+
+        const rankFee = (fee) => {
+            if (fee.id && !fee.isNew) {
+                return 3;
+            }
+
+            if (!fee.isNew) {
+                return 2;
+            }
+
+            return 1;
+        };
+
+        existing.forEach((fee) => {
+            const key = feeKey(fee);
+            const current = deduped.get(key);
+
+            if (!current || rankFee(fee) >= rankFee(current)) {
+                deduped.set(key, fee);
+            }
+        });
+
+        return Array.from(deduped.values());
     }
 
     /** @methods */
@@ -141,7 +201,8 @@ export default class ServiceRate extends Model {
         const store = getOwner(this).lookup('service:store');
         const existingFees = this.rate_fees?.toArray?.() ?? [];
         const last = existingFees[existingFees.length - 1];
-        const min = last ? last.max + 1 : 1;
+        const lastMax = Number(last?.max) || 0;
+        const min = last ? lastMax + 1 : 1;
         const max = min + 5;
 
         const newFee = store.createRecord('service-rate-fee', {
