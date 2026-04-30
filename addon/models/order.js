@@ -22,6 +22,7 @@ export default class OrderModel extends Model {
     @attr('string') purchase_rate_uuid;
     @attr('string') tracking_number_uuid;
     @attr('string') driver_assigned_uuid;
+    @attr('string') vehicle_assigned_uuid;
     @attr('string') manifest_uuid;
     @attr('string') service_quote_uuid;
     @attr('string') order_config_uuid;
@@ -77,10 +78,15 @@ export default class OrderModel extends Model {
     @attr('string') notes;
     @attr('string') type;
     @attr('string') status;
+    @attr('string') latest_status;
+    @attr('string') latest_status_code;
     @attr('number') adhoc_distance;
+    @attr('number') distance;
+    @attr('number') time;
     @attr('number') total_entities;
     @attr('number') transaction_amount;
     @attr('boolean') has_driver_assigned;
+    @attr('boolean') is_scheduled;
     @attr('boolean') pod_required;
     @attr('boolean') dispatched;
     @attr('boolean') started;
@@ -467,8 +473,23 @@ export default class OrderModel extends Model {
     async loadPayload(options = {}) {
         const owner = getOwner(this);
         const store = owner.lookup('service:store');
-        if (shouldNotLoadRelation(this, 'payload')) {
+        if (isBlank(this.payload_uuid)) {
             return;
+        }
+
+        const existingPayload = this.payload;
+        const isLightweightIndexOrder = this.meta?._index_resource === true;
+        const hasLoadedWaypointCollection = typeof existingPayload?.waypoints?.toArray === 'function' || isArray(existingPayload?.waypoints);
+        const indexedWaypointCount = Number(existingPayload?.waypoints_count ?? 0);
+        const loadedWaypointCount = Number(existingPayload?.waypoints?.length ?? 0);
+        const needsWaypointUpgrade = indexedWaypointCount > 0 && loadedWaypointCount === 0;
+
+        if (existingPayload && hasLoadedWaypointCollection && !needsWaypointUpgrade) {
+            return existingPayload;
+        }
+
+        if (existingPayload && !hasLoadedWaypointCollection && !isLightweightIndexOrder) {
+            return existingPayload;
         }
 
         const payload = await store.queryRecord(

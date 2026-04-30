@@ -19,11 +19,14 @@ export default class PayloadModel extends Model {
     @hasMany('entity', { async: false }) entities;
 
     /** @attributes */
-    @attr('string') meta;
+    @attr('raw') meta;
     @attr('string') cod_amount;
     @attr('string') cod_currency;
     @attr('string') cod_payment_method;
+    @attr('string') payment_method;
     @attr('string') type;
+    @attr('number') entities_count;
+    @attr('number') waypoints_count;
     @attr('date') deleted_at;
     @attr('date') created_at;
     @attr('date') updated_at;
@@ -37,6 +40,10 @@ export default class PayloadModel extends Model {
 
     @computed('waypoints.[]') get hasIntermediateWaypoints() {
         return this.waypoints.length > 0;
+    }
+
+    @computed('waypoints_count') get waypoint_count() {
+        return this.waypoints_count;
     }
 
     @computed('waypoints.[]', 'pickup_uuid', 'dropoff_uuid') get isMultiDrop() {
