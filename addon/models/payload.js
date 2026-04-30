@@ -35,6 +35,10 @@ export default class PayloadModel extends Model {
     @notEmpty('dropoff_uuid') hasDropoff;
     @notEmpty('return_uuid') hasReturn;
 
+    @computed('waypoints.[]') get hasIntermediateWaypoints() {
+        return this.waypoints.length > 0;
+    }
+
     @computed('waypoints.[]', 'pickup_uuid', 'dropoff_uuid') get isMultiDrop() {
         return this.waypoints.length > 0 && !this.pickup_uuid && !this.dropoff_uuid;
     }

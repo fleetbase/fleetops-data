@@ -58,6 +58,7 @@ export default class OrderModel extends Model {
     @alias('payload.entitiesByDestination') entitiesByDestination;
     @alias('payload.isMultiDrop') isMultiDrop;
     @alias('payload.isMultiDrop') isMultiDropOrder;
+    @alias('payload.hasIntermediateWaypoints') hasIntermediateWaypoints;
 
     /** @attributes */
     @attr('string') tracking;
