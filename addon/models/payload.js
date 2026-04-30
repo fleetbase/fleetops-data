@@ -109,12 +109,12 @@ export default class PayloadModel extends Model {
 
     // eslint-disable-next-line ember/use-brace-expansion
     @computed('{dropoff,pickup,waypoints}', 'waypoints.[]') get places() {
-        return [this.pickup, ...this.waypoints.toArray(), this.pickup].filter(Boolean);
+        return [this.pickup, ...this.waypoints.toArray(), this.dropoff].filter(Boolean);
     }
 
     // eslint-disable-next-line ember/use-brace-expansion
     @computed('waypoints.@each.place', 'waypoints.[]') get waypointPlaces() {
-        return this.waypoints.toArray().map((wp) => wp.place);
+        return this.waypoints.toArray().map((wp) => wp.place ?? wp);
     }
 
     @computed('{dropoff,pickup,waypoints}', 'waypoints.[]') get payloadCoordinates() {
