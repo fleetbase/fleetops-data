@@ -21,6 +21,7 @@ export default class WaypointModel extends PlaceModel {
     @attr('string') status_code;
     @attr('string') type;
     @attr('number') order;
+    @attr('boolean') complete;
     // Orchestrator time windows
     @attr('date') time_window_start;
     @attr('date') time_window_end;

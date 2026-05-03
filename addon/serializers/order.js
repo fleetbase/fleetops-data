@@ -85,9 +85,6 @@ export default class OrderSerializer extends ApplicationSerializer.extend(Embedd
                 json[key + '_type'] = null;
             } else {
                 let type = belongsTo.modelName;
-                if (!isBlank(belongsTo.attr(`${key}_type`))) {
-                    type = belongsTo.attr(`${key}_type`);
-                }
                 // Strip abstract subtype prefixes so the server receives the bare model type
                 // e.g. 'facilitator-vendor' -> 'vendor', 'customer-contact' -> 'contact'
                 if (typeof type === 'string') {

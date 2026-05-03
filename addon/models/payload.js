@@ -19,11 +19,14 @@ export default class PayloadModel extends Model {
     @hasMany('entity', { async: false }) entities;
 
     /** @attributes */
-    @attr('string') meta;
+    @attr('raw') meta;
     @attr('string') cod_amount;
     @attr('string') cod_currency;
     @attr('string') cod_payment_method;
+    @attr('string') payment_method;
     @attr('string') type;
+    @attr('number') entities_count;
+    @attr('number') waypoints_count;
     @attr('date') deleted_at;
     @attr('date') created_at;
     @attr('date') updated_at;
@@ -34,6 +37,14 @@ export default class PayloadModel extends Model {
     @notEmpty('pickup_uuid') hasPickup;
     @notEmpty('dropoff_uuid') hasDropoff;
     @notEmpty('return_uuid') hasReturn;
+
+    @computed('waypoints.[]') get hasIntermediateWaypoints() {
+        return this.waypoints.length > 0;
+    }
+
+    @computed('waypoints_count') get waypoint_count() {
+        return this.waypoints_count;
+    }
 
     @computed('waypoints.[]', 'pickup_uuid', 'dropoff_uuid') get isMultiDrop() {
         return this.waypoints.length > 0 && !this.pickup_uuid && !this.dropoff_uuid;
@@ -109,12 +120,12 @@ export default class PayloadModel extends Model {
 
     // eslint-disable-next-line ember/use-brace-expansion
     @computed('{dropoff,pickup,waypoints}', 'waypoints.[]') get places() {
-        return [this.pickup, ...this.waypoints.toArray(), this.pickup].filter(Boolean);
+        return [this.pickup, ...this.waypoints.toArray(), this.dropoff].filter(Boolean);
     }
 
     // eslint-disable-next-line ember/use-brace-expansion
     @computed('waypoints.@each.place', 'waypoints.[]') get waypointPlaces() {
-        return this.waypoints.toArray().map((wp) => wp.place);
+        return this.waypoints.toArray().map((wp) => wp.place ?? wp);
     }
 
     @computed('{dropoff,pickup,waypoints}', 'waypoints.[]') get payloadCoordinates() {

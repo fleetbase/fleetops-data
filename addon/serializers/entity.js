@@ -41,10 +41,6 @@ export default class EntitySerializer extends ApplicationSerializer.extend(Embed
         if (isPolymorphicTypeBlank) {
             key = this.keyForAttribute ? this.keyForAttribute(key, 'serialize') : key;
 
-            if (!isBlank(belongsTo.attr(`${key}_type`))) {
-                type = belongsTo.attr(`${key}_type`);
-            }
-
             if (!belongsTo) {
                 json[key + '_type'] = null;
             } else {

@@ -52,9 +52,6 @@ export default class WorkOrderSerializer extends ApplicationSerializer.extend(Em
                 json[key + '_type'] = null;
             } else {
                 let type = belongsTo.modelName;
-                if (!isBlank(belongsTo.attr(`${key}_type`))) {
-                    type = belongsTo.attr(`${key}_type`);
-                }
                 // Strip abstract subtype prefixes so the server receives the bare model type
                 // e.g. 'facilitator-vendor' -> 'vendor', 'maintenance-subject-vehicle' -> 'vehicle'
                 if (typeof type === 'string') {
