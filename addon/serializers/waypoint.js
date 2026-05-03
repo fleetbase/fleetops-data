@@ -68,10 +68,6 @@ export default class WaypointSerializer extends ApplicationSerializer.extend(Emb
         if (isPolymorphicTypeBlank) {
             key = this.keyForAttribute ? this.keyForAttribute(key, 'serialize') : key;
 
-            if (!isBlank(belongsTo.attr(`${key}_type`))) {
-                type = belongsTo.attr(`${key}_type`);
-            }
-
             // hotfix polymprohpic model types that do not exists as models like `customer-contact` `customer-vendor` should be `contact` or `vendor`
             if (typeof type === 'string') {
                 if (type.startsWith('customer-')) {

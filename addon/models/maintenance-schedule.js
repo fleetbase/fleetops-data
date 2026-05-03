@@ -7,10 +7,15 @@ export default class MaintenanceScheduleModel extends Model {
     @attr('string') uuid;
     @attr('string') public_id;
     @attr('string') company_uuid;
+    @attr('string') subject_uuid;
+    @attr('string') subject_type;
+    @attr('string') default_assignee_uuid;
+    @attr('string') default_assignee_type;
 
     /** @polymorphic relationships */
     @belongsTo('maintenance-subject', { polymorphic: true, async: false }) subject;
     @belongsTo('facilitator', { polymorphic: true, async: false }) default_assignee;
+
     /** @computed names — server-side convenience fields (read-only) */
     @attr('string') subject_name;
     @attr('string') default_assignee_name;
