@@ -61,26 +61,30 @@ export default class WaypointSerializer extends ApplicationSerializer.extend(Emb
     serializePolymorphicType(snapshot, json, relationship) {
         let key = relationship.key;
         let belongsTo = snapshot.belongsTo(key);
-        let type = belongsTo.modelName;
 
         // if snapshot already has type filled respect manual input
         const isPolymorphicTypeBlank = isBlank(snapshot.attr(key + '_type'));
         if (isPolymorphicTypeBlank) {
             key = this.keyForAttribute ? this.keyForAttribute(key, 'serialize') : key;
 
-            // hotfix polymprohpic model types that do not exists as models like `customer-contact` `customer-vendor` should be `contact` or `vendor`
-            if (typeof type === 'string') {
-                if (type.startsWith('customer-')) {
-                    type = type.replace('customer-', '');
-                }
-                if (type.startsWith('facilitator-')) {
-                    type = type.replace('facilitator-', '');
-                }
-            }
-
             if (!belongsTo) {
                 json[key + '_type'] = null;
             } else {
+                let type = belongsTo.modelName;
+                if (!isBlank(belongsTo.attr(`${key}_type`))) {
+                    type = belongsTo.attr(`${key}_type`);
+                }
+
+                // hotfix polymprohpic model types that do not exists as models like `customer-contact` `customer-vendor` should be `contact` or `vendor`
+                if (typeof type === 'string') {
+                    if (type.startsWith('customer-')) {
+                        type = type.replace('customer-', '');
+                    }
+                    if (type.startsWith('facilitator-')) {
+                        type = type.replace('facilitator-', '');
+                    }
+                }
+
                 json[key + '_type'] = `fleet-ops:${type}`;
             }
         }
