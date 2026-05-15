@@ -25,6 +25,7 @@ export default class RecurringOrderScheduleModel extends Model {
     @attr('raw') template_entities;
     @attr('raw') meta;
     @attr('raw') upcoming_occurrences;
+    @attr('raw') history_occurrences;
     @attr('date') next_occurrence_at;
     @attr('date') created_at;
     @attr('date') updated_at;
