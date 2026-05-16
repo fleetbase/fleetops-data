@@ -20,6 +20,13 @@ export default class RecurringOrderScheduleModel extends Model {
     @attr('string') driver_assigned_uuid;
     @attr('string') vehicle_assigned_uuid;
     @attr('string') service_rate_uuid;
+    @attr('string') customer_name;
+    @attr('string') facilitator_name;
+    @attr('string') order_config_name;
+    @attr('string') driver_assigned_name;
+    @attr('string') vehicle_assigned_name;
+    @attr('string') service_rate_name;
+    @attr('number') generated_orders_count;
     @attr('raw') template_order_meta;
     @attr('raw') template_payload;
     @attr('raw') template_entities;
