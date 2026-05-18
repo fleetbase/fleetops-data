@@ -51,6 +51,7 @@ export default class DriverModel extends Model {
     vehicle_avatar;
     @attr('string') vendor_name;
     @attr('string') drivers_license_number;
+    @attr('date') license_expiry;
     @attr('string', {
         defaultValue: get(config, 'defaultValues.driverAvatar'),
     })
