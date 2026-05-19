@@ -65,6 +65,7 @@ export default class DriverModel extends Model {
     @attr('raw') meta;
 
     /** @dates */
+    @attr('date') license_expiry;
     @attr('date') deleted_at;
     @attr('date') created_at;
     @attr('date') updated_at;
