@@ -11,4 +11,11 @@ module('Unit | Model | order', function (hooks) {
         let model = store.createRecord('order', {});
         assert.ok(model);
     });
+
+    test('order config is embedded synchronously', function (assert) {
+        let store = this.owner.lookup('service:store');
+        let relationship = store.modelFor('order').relationshipsByName.get('order_config');
+
+        assert.strictEqual(relationship.options.async, false);
+    });
 });

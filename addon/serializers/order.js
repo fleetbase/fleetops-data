@@ -36,6 +36,8 @@ export default class OrderSerializer extends ApplicationSerializer.extend(Embedd
      */
     serialize(snapshot, options) {
         const json = super.serialize(snapshot, options);
+        const selectedOrderConfigUuid = snapshot.attr('order_config_uuid');
+        const selectedType = snapshot.attr('type');
         const unshiftAttributes = [
             'order_config',
             'driver_name',
@@ -58,6 +60,14 @@ export default class OrderSerializer extends ApplicationSerializer.extend(Embedd
         unshiftAttributes.forEach((attr) => {
             delete json[attr];
         });
+
+        if (!isBlank(selectedOrderConfigUuid)) {
+            json.order_config_uuid = selectedOrderConfigUuid;
+        }
+
+        if (!isBlank(selectedType)) {
+            json.type = selectedType;
+        }
 
         return json;
     }
