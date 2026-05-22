@@ -105,6 +105,49 @@ module('Unit | Model | service rate', function (hooks) {
         assert.strictEqual(serviceRate.rateFees[0].fee, '2');
     });
 
+    test('rateFees prefers the latest duplicate persisted multi-zone fee', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serviceRate = store.createRecord('service-rate', {
+            rate_calculation_method: 'multi_zone_distance',
+        });
+
+        const updatedRule = store.push({
+            data: {
+                type: 'service-rate-fee',
+                id: 'rate-fee-updated',
+                attributes: {
+                    label: 'Main City',
+                    service_area_uuid: 'service-area-1',
+                    priority: 10,
+                    unit: 'multi_zone_distance',
+                    fee: '300',
+                    updated_at: new Date('2026-05-22T04:45:00.000Z'),
+                },
+            },
+        });
+
+        const staleRule = store.push({
+            data: {
+                type: 'service-rate-fee',
+                id: 'rate-fee-stale',
+                attributes: {
+                    label: 'Main City',
+                    service_area_uuid: 'service-area-1',
+                    priority: 10,
+                    unit: 'multi_zone_distance',
+                    fee: '0',
+                    updated_at: new Date('2026-05-22T04:40:00.000Z'),
+                },
+            },
+        });
+
+        serviceRate.rate_fees.pushObjects([updatedRule, staleRule]);
+
+        assert.strictEqual(serviceRate.rateFees.length, 1);
+        assert.strictEqual(serviceRate.rateFees[0].id, 'rate-fee-updated');
+        assert.strictEqual(serviceRate.rateFees[0].fee, '300');
+    });
+
     test('parcelFees prefers persisted parcel fees over duplicate unsaved defaults', function (assert) {
         const store = this.owner.lookup('service:store');
         const serviceRate = store.createRecord('service-rate', {

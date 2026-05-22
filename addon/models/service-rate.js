@@ -120,7 +120,13 @@ export default class ServiceRate extends Model {
         return this.cod_calculation_method === 'percentage';
     }
 
-    @computed('rate_fees.@each.{distance,min,max,unit,priority,is_fallback,zone_uuid,service_area_uuid}', 'max_distance', 'rate_calculation_method', 'isPerDrop', 'isMultiZoneDistance')
+    @computed(
+        'rate_fees.@each.{id,uuid,distance,min,max,unit,fee,label,priority,is_fallback,zone_uuid,service_area_uuid,updated_at}',
+        'max_distance',
+        'rate_calculation_method',
+        'isPerDrop',
+        'isMultiZoneDistance'
+    )
     get rateFees() {
         const existing = (this.rate_fees?.toArray?.() ?? []).filter((r) => !r.isDeleted);
 
@@ -137,6 +143,12 @@ export default class ServiceRate extends Model {
 
                 return 1;
             };
+            const updatedAtMs = (fee) => {
+                const value = fee.updated_at instanceof Date ? fee.updated_at : new Date(fee.updated_at);
+                const timestamp = value.getTime();
+
+                return Number.isNaN(timestamp) ? 0 : timestamp;
+            };
             const geographyId = (fee) => {
                 if (fee.is_fallback) {
                     return 'fallback';
@@ -150,8 +162,10 @@ export default class ServiceRate extends Model {
                 .forEach((fee) => {
                     const key = `multi-zone:${fee.is_fallback}:${geographyId(fee)}:${fee.priority}:${fee.label}`;
                     const current = deduped.get(key);
+                    const feeRank = rankFee(fee);
+                    const currentRank = current ? rankFee(current) : 0;
 
-                    if (!current || rankFee(fee) >= rankFee(current)) {
+                    if (!current || feeRank > currentRank || (feeRank === currentRank && updatedAtMs(fee) >= updatedAtMs(current))) {
                         deduped.set(key, fee);
                     }
                 });
