@@ -48,6 +48,10 @@ export default class ServiceRateSerializer extends ApplicationSerializer.extend(
                             return `drop:${fee.min}:${fee.max}:${fee.unit}`;
                         }
 
+                        if (fee.unit === 'multi_zone_distance') {
+                            return `multi-zone:${fee.service_area_uuid}:${fee.zone_uuid}:${fee.is_fallback}:${fee.priority}:${fee.label}`;
+                        }
+
                         return `distance:${fee.distance}`;
                     };
 
