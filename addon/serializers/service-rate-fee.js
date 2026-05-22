@@ -4,8 +4,8 @@ import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
 export default class ServiceRateFeeSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
     get attrs() {
         return {
-            service_area: { embedded: 'always' },
-            zone: { embedded: 'always' },
+            service_area: { embedded: 'always', serialize: false },
+            zone: { embedded: 'always', serialize: false },
         };
     }
 }
