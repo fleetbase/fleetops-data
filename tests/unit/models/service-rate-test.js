@@ -70,6 +70,41 @@ module('Unit | Model | service rate', function (hooks) {
         );
     });
 
+    test('rateFees prefers persisted multi-zone fees over duplicate unsaved rows', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serviceRate = store.createRecord('service-rate', {
+            rate_calculation_method: 'multi_zone_distance',
+        });
+
+        const unsavedRule = store.createRecord('service-rate-fee', {
+            label: 'Main City',
+            service_area_uuid: 'service-area-1',
+            priority: 10,
+            unit: 'multi_zone_distance',
+            fee: '0',
+        });
+
+        const persistedRule = store.push({
+            data: {
+                type: 'service-rate-fee',
+                id: 'rate-fee-1',
+                attributes: {
+                    label: 'Main City',
+                    service_area_uuid: 'service-area-1',
+                    priority: 10,
+                    unit: 'multi_zone_distance',
+                    fee: '2',
+                },
+            },
+        });
+
+        serviceRate.rate_fees.pushObjects([unsavedRule, persistedRule]);
+
+        assert.strictEqual(serviceRate.rateFees.length, 1);
+        assert.strictEqual(serviceRate.rateFees[0].id, 'rate-fee-1');
+        assert.strictEqual(serviceRate.rateFees[0].fee, '2');
+    });
+
     test('parcelFees prefers persisted parcel fees over duplicate unsaved defaults', function (assert) {
         const store = this.owner.lookup('service:store');
         const serviceRate = store.createRecord('service-rate', {

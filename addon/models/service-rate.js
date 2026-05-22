@@ -125,7 +125,38 @@ export default class ServiceRate extends Model {
         const existing = (this.rate_fees?.toArray?.() ?? []).filter((r) => !r.isDeleted);
 
         if (this.isMultiZoneDistance) {
-            return existing.filter((r) => r.unit === 'multi_zone_distance').sort((a, b) => (Number(b.priority) || 0) - (Number(a.priority) || 0));
+            const deduped = new Map();
+            const rankFee = (fee) => {
+                if (fee.id && !fee.isNew) {
+                    return 3;
+                }
+
+                if (!fee.isNew) {
+                    return 2;
+                }
+
+                return 1;
+            };
+            const geographyId = (fee) => {
+                if (fee.is_fallback) {
+                    return 'fallback';
+                }
+
+                return fee.zone_uuid || fee.zone?.id || fee.service_area_uuid || fee.service_area?.id || 'unassigned';
+            };
+
+            existing
+                .filter((r) => r.unit === 'multi_zone_distance')
+                .forEach((fee) => {
+                    const key = `multi-zone:${fee.is_fallback}:${geographyId(fee)}:${fee.priority}:${fee.label}`;
+                    const current = deduped.get(key);
+
+                    if (!current || rankFee(fee) >= rankFee(current)) {
+                        deduped.set(key, fee);
+                    }
+                });
+
+            return Array.from(deduped.values()).sort((a, b) => (Number(b.priority) || 0) - (Number(a.priority) || 0));
         }
 
         if (this.isPerDrop) {
