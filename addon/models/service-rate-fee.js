@@ -73,6 +73,18 @@ export default class ServiceRateFeeModel extends Model {
         return formatDate(this.created_at, 'dd, MMM');
     }
 
+    @computed('is_fallback', 'zone_uuid', 'service_area_uuid', 'zone.id', 'service_area.id') get geography_type() {
+        if (this.is_fallback) {
+            return 'fallback';
+        }
+
+        if (this.zone_uuid || this.zone?.id) {
+            return 'zone';
+        }
+
+        return 'service_area';
+    }
+
     /** @methods */
     toJSON() {
         return {
