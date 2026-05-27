@@ -60,7 +60,7 @@ export default class DriverModel extends Model {
     @attr('number') heading;
     @attr('string') country;
     @attr('string') city;
-    @attr('string') status;
+    @attr('string', { defaultValue: 'available' }) status;
     @attr('boolean') online;
     @attr('raw') meta;
 
