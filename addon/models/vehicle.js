@@ -144,7 +144,7 @@ export default class VehicleModel extends Model {
 
     /** Misc text / meta */
     @attr('string') notes;
-    @attr('string') status;
+    @attr('string', { defaultValue: 'available' }) status;
     @attr('string') slug;
     @attr('boolean') online;
     @attr('raw') vin_data;
