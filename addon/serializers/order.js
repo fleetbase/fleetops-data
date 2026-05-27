@@ -24,6 +24,7 @@ export default class OrderSerializer extends ApplicationSerializer.extend(Embedd
             files: { embedded: 'always' },
             comments: { embedded: 'always' },
             custom_field_values: { embedded: 'always' },
+            recurring_order_schedule: { embedded: 'always' },
         };
     }
 

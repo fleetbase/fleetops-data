@@ -29,6 +29,7 @@ export default class OrderModel extends Model {
     @attr('string') payload_id;
     @attr('string') purchase_rate_id;
     @attr('string') driver_id;
+    @attr('string') recurring_order_schedule_uuid;
 
     /** @relationships */
     @belongsTo('company') company;
@@ -43,6 +44,7 @@ export default class OrderModel extends Model {
     @belongsTo('route', { async: false }) route;
     @belongsTo('purchase-rate', { async: false }) purchase_rate;
     @belongsTo('tracking-number', { async: false }) tracking_number;
+    @belongsTo('recurring-order-schedule', { async: false, inverse: null }) recurring_order_schedule;
     @hasMany('tracking-status', { async: false }) tracking_statuses;
     @hasMany('comment', { async: false }) comments;
     @hasMany('file', { async: false }) files;
@@ -92,6 +94,7 @@ export default class OrderModel extends Model {
     @attr('boolean') started;
     @attr('boolean') adhoc;
     @attr('boolean') is_route_optimized;
+    @attr('boolean') is_recurring_generated;
     @attr('boolean') customer_is_contact;
     @attr('boolean') customer_is_vendor;
     @attr('boolean') facilitator_is_contact;
@@ -109,6 +112,7 @@ export default class OrderModel extends Model {
 
     /** @dates */
     @attr('date') scheduled_at;
+    @attr('date') recurring_occurrence_at;
     @attr('date') dispatched_at;
     @attr('date') started_at;
     @attr('date') deleted_at;
