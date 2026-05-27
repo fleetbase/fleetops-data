@@ -88,6 +88,10 @@ export default class ServiceRate extends Model {
         return this.rate_calculation_method === 'per_meter';
     }
 
+    @computed('rate_calculation_method') get isMultiZoneDistance() {
+        return this.rate_calculation_method === 'multi_zone_distance';
+    }
+
     @computed('rate_calculation_method') get isPerDrop() {
         return this.rate_calculation_method === 'per_drop';
     }
@@ -116,8 +120,58 @@ export default class ServiceRate extends Model {
         return this.cod_calculation_method === 'percentage';
     }
 
-    @computed('rate_fees.@each.{distance,min,max,unit}', 'max_distance', 'rate_calculation_method', 'isPerDrop') get rateFees() {
+    @computed(
+        'rate_fees.@each.{id,uuid,distance,min,max,unit,fee,label,priority,is_fallback,zone_uuid,service_area_uuid,updated_at}',
+        'max_distance',
+        'rate_calculation_method',
+        'isPerDrop',
+        'isMultiZoneDistance'
+    )
+    get rateFees() {
         const existing = (this.rate_fees?.toArray?.() ?? []).filter((r) => !r.isDeleted);
+
+        if (this.isMultiZoneDistance) {
+            const deduped = new Map();
+            const rankFee = (fee) => {
+                if (fee.id && !fee.isNew) {
+                    return 3;
+                }
+
+                if (!fee.isNew) {
+                    return 2;
+                }
+
+                return 1;
+            };
+            const updatedAtMs = (fee) => {
+                const value = fee.updated_at instanceof Date ? fee.updated_at : new Date(fee.updated_at);
+                const timestamp = value.getTime();
+
+                return Number.isNaN(timestamp) ? 0 : timestamp;
+            };
+            const geographyId = (fee) => {
+                if (fee.is_fallback) {
+                    return 'fallback';
+                }
+
+                return fee.zone_uuid || fee.zone?.id || fee.service_area_uuid || fee.service_area?.id || 'unassigned';
+            };
+
+            existing
+                .filter((r) => r.unit === 'multi_zone_distance')
+                .forEach((fee) => {
+                    const key = `multi-zone:${fee.is_fallback}:${geographyId(fee)}:${fee.priority}:${fee.label}`;
+                    const current = deduped.get(key);
+                    const feeRank = rankFee(fee);
+                    const currentRank = current ? rankFee(current) : 0;
+
+                    if (!current || feeRank > currentRank || (feeRank === currentRank && updatedAtMs(fee) >= updatedAtMs(current))) {
+                        deduped.set(key, fee);
+                    }
+                });
+
+            return Array.from(deduped.values()).sort((a, b) => (Number(b.priority) || 0) - (Number(a.priority) || 0));
+        }
 
         if (this.isPerDrop) {
             const deduped = new Map();
@@ -214,6 +268,8 @@ export default class ServiceRate extends Model {
         });
 
         this.rate_fees.addObject(newFee);
+
+        return newFee;
     }
 
     @action removePerDropFee(fee) {
@@ -235,5 +291,44 @@ export default class ServiceRate extends Model {
         // Add a new default per-drop fee
         const defaultFee = this.createDefaultPerDropFee();
         this.rate_fees.addObject(defaultFee);
+    }
+
+    @action addMultiZoneDistanceRule(attributes = {}) {
+        const store = getOwner(this).lookup('service:store');
+        const existingFees = this.rate_fees?.toArray?.() ?? [];
+        const nextPriority = existingFees.filter((fee) => fee.unit === 'multi_zone_distance').reduce((highest, fee) => Math.max(highest, Number(fee.priority) || 0), 0) + 10;
+
+        const newFee = store.createRecord('service-rate-fee', {
+            label: 'Distance rule',
+            priority: nextPriority,
+            is_fallback: false,
+            distance_unit: 'km',
+            unit: 'multi_zone_distance',
+            fee: 0,
+            currency: this.currency,
+            ...attributes,
+        });
+
+        this.rate_fees.addObject(newFee);
+    }
+
+    @action addMultiZoneDistanceFallbackRule() {
+        const existingFallback = (this.rate_fees?.toArray?.() ?? []).find((fee) => fee.unit === 'multi_zone_distance' && fee.is_fallback && !fee.isDeleted);
+
+        if (existingFallback) {
+            return existingFallback;
+        }
+
+        return this.addMultiZoneDistanceRule({
+            label: 'Fallback distance',
+            priority: 0,
+            is_fallback: true,
+        });
+    }
+
+    @action removeMultiZoneDistanceRule(fee) {
+        if (!fee || !fee.destroyRecord) return;
+        this.rate_fees.removeObject(fee);
+        fee.destroyRecord();
     }
 }

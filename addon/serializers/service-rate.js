@@ -48,14 +48,19 @@ export default class ServiceRateSerializer extends ApplicationSerializer.extend(
                             return `drop:${fee.min}:${fee.max}:${fee.unit}`;
                         }
 
+                        if (fee.unit === 'multi_zone_distance') {
+                            return `multi-zone:${fee.service_area_uuid}:${fee.zone_uuid}:${fee.is_fallback}:${fee.priority}:${fee.label}`;
+                        }
+
                         return `distance:${fee.distance}`;
                     };
 
                     const savedByKey = new Map(savedRateFees.map((f) => [savedFeeKey(f), f]));
+                    const hasSavedMultiZoneFees = savedRateFees.some((fee) => fee.unit === 'multi_zone_distance');
 
                     // Only remove unsaved fees that duplicate saved fees
                     unsavedRateFees.forEach((fee) => {
-                        if (savedByKey.has(savedFeeKey(fee))) {
+                        if ((hasSavedMultiZoneFees && fee.unit === 'multi_zone_distance') || savedByKey.has(savedFeeKey(fee))) {
                             serviceRate.get('rate_fees').removeObject(fee);
                             fee.unloadRecord();
                         }
