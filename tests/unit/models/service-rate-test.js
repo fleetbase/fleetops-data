@@ -51,6 +51,103 @@ module('Unit | Model | service rate', function (hooks) {
         );
     });
 
+    test('rateFees returns multi-zone distance rules sorted by priority', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serviceRate = store.createRecord('service-rate', {
+            rate_calculation_method: 'multi_zone_distance',
+        });
+
+        serviceRate.rate_fees.pushObjects([
+            store.createRecord('service-rate-fee', { label: 'Fallback', unit: 'multi_zone_distance', priority: 0, is_fallback: true }),
+            store.createRecord('service-rate-fee', { label: 'Main City', unit: 'multi_zone_distance', priority: 20 }),
+            store.createRecord('service-rate-fee', { distance: 0, fee: 50 }),
+            store.createRecord('service-rate-fee', { label: 'Remote', unit: 'multi_zone_distance', priority: 10 }),
+        ]);
+
+        assert.deepEqual(
+            serviceRate.rateFees.map((fee) => fee.label),
+            ['Main City', 'Remote', 'Fallback']
+        );
+    });
+
+    test('rateFees prefers persisted multi-zone fees over duplicate unsaved rows', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serviceRate = store.createRecord('service-rate', {
+            rate_calculation_method: 'multi_zone_distance',
+        });
+
+        const unsavedRule = store.createRecord('service-rate-fee', {
+            label: 'Main City',
+            service_area_uuid: 'service-area-1',
+            priority: 10,
+            unit: 'multi_zone_distance',
+            fee: '0',
+        });
+
+        const persistedRule = store.push({
+            data: {
+                type: 'service-rate-fee',
+                id: 'rate-fee-1',
+                attributes: {
+                    label: 'Main City',
+                    service_area_uuid: 'service-area-1',
+                    priority: 10,
+                    unit: 'multi_zone_distance',
+                    fee: '2',
+                },
+            },
+        });
+
+        serviceRate.rate_fees.pushObjects([unsavedRule, persistedRule]);
+
+        assert.strictEqual(serviceRate.rateFees.length, 1);
+        assert.strictEqual(serviceRate.rateFees[0].id, 'rate-fee-1');
+        assert.strictEqual(serviceRate.rateFees[0].fee, '2');
+    });
+
+    test('rateFees prefers the latest duplicate persisted multi-zone fee', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serviceRate = store.createRecord('service-rate', {
+            rate_calculation_method: 'multi_zone_distance',
+        });
+
+        const updatedRule = store.push({
+            data: {
+                type: 'service-rate-fee',
+                id: 'rate-fee-updated',
+                attributes: {
+                    label: 'Main City',
+                    service_area_uuid: 'service-area-1',
+                    priority: 10,
+                    unit: 'multi_zone_distance',
+                    fee: '300',
+                    updated_at: new Date('2026-05-22T04:45:00.000Z'),
+                },
+            },
+        });
+
+        const staleRule = store.push({
+            data: {
+                type: 'service-rate-fee',
+                id: 'rate-fee-stale',
+                attributes: {
+                    label: 'Main City',
+                    service_area_uuid: 'service-area-1',
+                    priority: 10,
+                    unit: 'multi_zone_distance',
+                    fee: '0',
+                    updated_at: new Date('2026-05-22T04:40:00.000Z'),
+                },
+            },
+        });
+
+        serviceRate.rate_fees.pushObjects([updatedRule, staleRule]);
+
+        assert.strictEqual(serviceRate.rateFees.length, 1);
+        assert.strictEqual(serviceRate.rateFees[0].id, 'rate-fee-updated');
+        assert.strictEqual(serviceRate.rateFees[0].fee, '300');
+    });
+
     test('parcelFees prefers persisted parcel fees over duplicate unsaved defaults', function (assert) {
         const store = this.owner.lookup('service:store');
         const serviceRate = store.createRecord('service-rate', {
@@ -151,6 +248,24 @@ module('Unit | Model | service rate', function (hooks) {
 
         assert.strictEqual(addedFee.min, 3);
         assert.strictEqual(addedFee.max, 8);
+    });
+
+    test('addMultiZoneDistanceRule creates generic geographic pricing rules', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serviceRate = store.createRecord('service-rate', {
+            rate_calculation_method: 'multi_zone_distance',
+            currency: 'SAR',
+        });
+
+        serviceRate.addMultiZoneDistanceRule({ label: 'Main City', fee: 250 });
+        serviceRate.addMultiZoneDistanceFallbackRule();
+
+        assert.strictEqual(serviceRate.rate_fees.length, 2);
+        assert.strictEqual(serviceRate.rate_fees[0].unit, 'multi_zone_distance');
+        assert.strictEqual(serviceRate.rate_fees[0].distance_unit, 'km');
+        assert.strictEqual(serviceRate.rate_fees[0].currency, 'SAR');
+        assert.false(serviceRate.rate_fees[0].is_fallback);
+        assert.true(serviceRate.rate_fees[1].is_fallback);
     });
 
     test('rateFees prefers persisted per-drop fees over duplicate unsaved rows', function (assert) {
