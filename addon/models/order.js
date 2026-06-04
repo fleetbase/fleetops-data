@@ -80,6 +80,7 @@ export default class OrderModel extends Model {
     @attr('string') status;
     @attr('string') latest_status;
     @attr('string') latest_status_code;
+    @attr('string') currency;
     @attr('number') adhoc_distance;
     @attr('number') distance;
     @attr('number') time;

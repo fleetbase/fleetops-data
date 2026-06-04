@@ -6,6 +6,7 @@ import isRelationMissing from '@fleetbase/ember-core/utils/is-relation-missing';
 
 export default class IssueModel extends Model {
     /** @ids */
+    @attr('string') uuid;
     @attr('string') public_id;
     @attr('string') issue_id;
     @attr('string') company_uuid;
@@ -13,12 +14,15 @@ export default class IssueModel extends Model {
     @attr('string') assigned_to_uuid;
     @attr('string') driver_uuid;
     @attr('string') vehicle_uuid;
+    @attr('string') order_uuid;
 
     /** @relationships */
-    @belongsTo('user') reporter;
-    @belongsTo('user') assignee;
-    @belongsTo('vehicle') vehicle;
-    @belongsTo('driver') driver;
+    @belongsTo('user', { async: false }) reporter;
+    @belongsTo('user', { async: false }) assignee;
+    @belongsTo('vehicle', { async: false }) vehicle;
+    @belongsTo('driver', { async: false }) driver;
+    @belongsTo('order', { async: false }) order;
+    @hasMany('file', { async: false }) files;
     @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @attributes */
@@ -37,6 +41,7 @@ export default class IssueModel extends Model {
     @attr('raw') meta;
 
     /** @dates */
+    @attr('date') resolved_at;
     @attr('date') deleted_at;
     @attr('date') created_at;
     @attr('date') updated_at;
