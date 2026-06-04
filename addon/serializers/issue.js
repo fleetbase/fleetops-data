@@ -13,6 +13,8 @@ export default class IssueSerializer extends ApplicationSerializer.extend(Embedd
             vehicle: { embedded: 'always' },
             reporter: { embedded: 'always' },
             assignee: { embedded: 'always' },
+            order: { embedded: 'always' },
+            files: { embedded: 'always' },
             custom_field_values: { embedded: 'always' },
         };
     }
