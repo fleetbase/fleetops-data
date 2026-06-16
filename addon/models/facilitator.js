@@ -20,6 +20,7 @@ export default class FacilitatorModel extends Model {
     @equal('facilitator_type', 'vendor') isVendor;
     @equal('facilitator_type', 'integrated-vendor') isIntegratedVendor;
     @equal('facilitator_type', 'contact') isContact;
+    @equal('facilitator_type', 'driver') isDriver;
 
     @computed('updated_at') get updatedAgo() {
         if (!isValidDate(this.updated_at)) {
