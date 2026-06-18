@@ -19,6 +19,7 @@ export default class WorkOrderModel extends Model {
     /** @attributes */
     @attr('string') code;
     @attr('string') subject;
+    @attr('string') category;
     @attr('string') status;
     @attr('string') priority;
     @attr('string') instructions;
