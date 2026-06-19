@@ -16,6 +16,7 @@ export default class DeviceModel extends Model {
     /** @relationships */
     @belongsTo('telematic', { async: false }) telematic;
     @belongsTo('warranty', { async: false }) warranty;
+    @belongsTo('attachable', { polymorphic: true, async: false }) attachable;
     @hasMany('device-event', { async: false }) events;
     @hasMany('sensor', { async: false }) sensors;
     @hasMany('custom-field-value', { async: false }) custom_field_values;
