@@ -26,6 +26,15 @@ export default class DeviceEventModel extends Model {
     @attr('string') comment;
     @attr('string') slug;
     @attr('string') device_name;
+    @attr('string') device_id;
+    @attr('string') device_imei;
+    @attr('string') device_serial_number;
+    @attr('string') device_connection_status;
+    @attr('string') device_status;
+    @attr('string') device_photo_url;
+    @attr('string') telematic_uuid;
+    @attr('string') telematic_name;
+    @attr('object') provider_descriptor;
 
     /** @dates */
     @attr('date') occurred_at;
