@@ -246,9 +246,9 @@ else in the addon is excluded from coverage.
 
 ---
 
-## Unrelated discrepancy noticed in passing
+## Unrelated discrepancy noticed in passing — fixed
 
-`README.md` states the project is licensed under the MIT License, while
-`package.json` declares `AGPL-3.0-or-later` and `LICENSE.md` contains the AGPL
-text. Not touched here — correcting a stated licence is not a coverage change —
-but the README is wrong about which licence applies.
+`README.md` stated the project was licensed under the MIT License, while
+`package.json` declares `AGPL-3.0-or-later` and `LICENSE.md` contains the GNU
+Affero General Public License v3 text. The README was the only wrong reference
+and now names the AGPL, matching the licence the project actually ships under.
