@@ -68,4 +68,19 @@ module('Unit | Model | maintenance schedule', function (hooks) {
             }
         );
     });
+
+    test('isActive and isPaused follow the schedule status', function (assert) {
+        const schedule = this.store.createRecord('maintenance-schedule');
+
+        assert.false(schedule.isActive);
+        assert.false(schedule.isPaused);
+
+        schedule.set('status', 'active');
+        assert.true(schedule.isActive);
+        assert.false(schedule.isPaused);
+
+        schedule.set('status', 'paused');
+        assert.false(schedule.isActive);
+        assert.true(schedule.isPaused);
+    });
 });

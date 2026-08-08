@@ -70,4 +70,10 @@ module('Unit | Model | asset', function (hooks) {
             }
         );
     });
+
+    test('yearMakeModel joins the parts that are present and omits the rest', function (assert) {
+        assert.strictEqual(this.store.createRecord('asset', { year: '2020', make: 'Ford', model: 'Transit' }).yearMakeModel, '2020 Ford Transit');
+        assert.strictEqual(this.store.createRecord('asset', { make: 'Ford' }).yearMakeModel, 'Ford');
+        assert.strictEqual(this.store.createRecord('asset').yearMakeModel, '');
+    });
 });

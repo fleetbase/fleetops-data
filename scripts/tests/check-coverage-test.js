@@ -78,9 +78,9 @@ function writeReport(root, summary, final) {
  * @param {String} root
  * @return {{ code: Number, output: String }}
  */
-function runGate(root) {
+function runGate(root, unreachable = {}) {
     const lines = [];
-    const code = run({ projectRoot: root, log: (line) => lines.push(line) });
+    const code = run({ projectRoot: root, unreachable, log: (line) => lines.push(line) });
     return { code, output: lines.join('\n') };
 }
 
@@ -389,5 +389,127 @@ describe('run', function () {
 
         assert.equal(runGate(root).code, 1);
         assert.equal(runGate(root).code, 1);
+    });
+});
+
+describe('reconcileUnreachable', function () {
+    const { reconcileUnreachable, uncoveredLocations, UNREACHABLE } = require('../check-coverage');
+
+    /**
+     * @param {Object} overrides
+     * @return {Object} an Istanbul file entry with one uncovered statement,
+     *                  branch and function
+     */
+    function entryWithGaps({ statementHits = 0, branchHits = [1, 0], fnHits = 0 } = {}) {
+        return {
+            statementMap: { 0: { start: { line: 42 } } },
+            fnMap: { 0: { name: 'rankFee', decl: { start: { line: 40 } } } },
+            branchMap: { 0: { type: 'if', loc: { start: { line: 44 } } } },
+            s: { 0: statementHits },
+            f: { 0: fnHits },
+            b: { 0: branchHits },
+        };
+    }
+
+    it('enumerates uncovered locations in the documented identity format', function () {
+        assert.deepEqual(uncoveredLocations(entryWithGaps()), {
+            statements: [42],
+            branches: ['if@44#1'],
+            functions: ['rankFee'],
+        });
+    });
+
+    it('reports nothing covered and nothing wrong for a file with no exemptions', function () {
+        const { allowed, problems } = reconcileUnreachable('addon/models/unlisted.js', entryWithGaps());
+
+        assert.deepEqual(problems, []);
+        assert.deepEqual(allowed, { statements: 0, branches: 0, functions: 0, lines: 0 });
+    });
+
+    it('the shipped exemption list is empty or fully documented', function () {
+        for (const [file, entry] of Object.entries(UNREACHABLE)) {
+            assert.equal(typeof entry.reason, 'string', `${file} has a written reason`);
+            assert.ok(entry.reason.length > 20, `${file}'s reason is substantive`);
+        }
+    });
+});
+
+describe('the documented-unreachable allowlist', function () {
+    /**
+     * @param {Object} [overrides]
+     * @return {Object} an Istanbul file entry with one uncovered branch
+     */
+    function entryWithUncoveredBranch() {
+        return {
+            statementMap: { 0: { start: { line: 42 } } },
+            fnMap: {},
+            branchMap: { 0: { type: 'if', loc: { start: { line: 44 } } } },
+            s: { 0: 1 },
+            f: {},
+            b: { 0: [1, 0] },
+        };
+    }
+
+    it('a documented branch is counted as covered and the gate passes', function () {
+        const root = makeProject(['addon/models/order.js']);
+        writeReport(
+            root,
+            {
+                total: fullMetrics({ branches: [1, 2] }),
+                'addon/models/order.js': fullMetrics({ branches: [1, 2] }),
+            },
+            { 'addon/models/order.js': entryWithUncoveredBranch() }
+        );
+
+        const { code, output } = runGate(root, {
+            'addon/models/order.js': { reason: 'A documented, provably unreachable defensive branch.', branches: ['if@44#1'] },
+        });
+
+        assert.equal(code, 0);
+        assert.match(output, /Documented unreachable code/);
+        assert.match(output, /A documented, provably unreachable defensive branch/);
+    });
+
+    it('an undocumented branch in the same file still fails', function () {
+        const root = makeProject(['addon/models/order.js']);
+        writeReport(
+            root,
+            {
+                total: fullMetrics({ branches: [1, 3] }),
+                'addon/models/order.js': fullMetrics({ branches: [1, 3] }),
+            },
+            { 'addon/models/order.js': entryWithUncoveredBranch() }
+        );
+
+        const { code } = runGate(root, {
+            'addon/models/order.js': { reason: 'A documented, provably unreachable defensive branch.', branches: ['if@44#1'] },
+        });
+
+        assert.equal(code, 1, 'the exemption covers one branch, not the file');
+    });
+
+    it('an exemption that has become covered fails as stale', function () {
+        const root = makeProject(['addon/models/order.js']);
+        const covered = entryWithUncoveredBranch();
+        covered.b[0] = [1, 1];
+
+        writeReport(root, { total: fullMetrics(), 'addon/models/order.js': fullMetrics() }, { 'addon/models/order.js': covered });
+
+        const { code, output } = runGate(root, {
+            'addon/models/order.js': { reason: 'A documented, provably unreachable defensive branch.', branches: ['if@44#1'] },
+        });
+
+        assert.equal(code, 1);
+        assert.match(output, /is now covered — remove the stale exemption/);
+    });
+
+    it('an exemption for a file that is not in the report fails', function () {
+        const root = makeProject(['addon/models/order.js']);
+        writeReport(root, { total: fullMetrics(), 'addon/models/order.js': fullMetrics() }, { 'addon/models/order.js': { statementMap: {}, fnMap: {}, branchMap: {}, s: {}, f: {}, b: {} } });
+
+        const { code, output } = runGate(root, { 'addon/models/gone.js': { reason: 'Refers to a file that no longer exists in the report.' } });
+
+        assert.equal(code, 1);
+        assert.match(output, /is not in the coverage report/);
     });
 });

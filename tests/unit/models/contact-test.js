@@ -54,4 +54,23 @@ module('Unit | Model | contact', function (hooks) {
             }
         );
     });
+
+    module('customerId', function () {
+        test('it rewrites a contact public id into its customer form', function (assert) {
+            assert.strictEqual(this.store.createRecord('contact', { public_id: 'contact_abc123' }).customerId, 'customer_abc123');
+        });
+
+        test('an id that is not a contact id is passed through unchanged', function (assert) {
+            assert.strictEqual(this.store.createRecord('contact', { public_id: 'customer_abc123' }).customerId, 'customer_abc123');
+        });
+    });
+
+    test('has_place follows the place identifier rather than the loaded record', function (assert) {
+        const contact = this.store.createRecord('contact');
+
+        assert.false(contact.has_place);
+
+        contact.set('place_uuid', 'place_1');
+        assert.true(contact.has_place);
+    });
 });

@@ -38,4 +38,36 @@ module('Unit | Model | service rate parcel fee', function (hooks) {
             }
         );
     });
+
+    test('toJSON emits the parcel dimensions and price the backend accepts', function (assert) {
+        const fee = this.store.push(
+            this.store.normalize('service-rate-parcel-fee', {
+                uuid: 'pf_1',
+                service_rate_uuid: 'rate_1',
+                size: 'small',
+                length: '34',
+                width: '18',
+                height: '10',
+                dimensions_unit: 'cm',
+                weight: '2',
+                weight_unit: 'kg',
+                fee: '5',
+                currency: 'SGD',
+            })
+        );
+
+        assert.deepEqual(fee.toJSON(), {
+            uuid: 'pf_1',
+            service_rate_uuid: 'rate_1',
+            size: 'small',
+            length: '34',
+            width: '18',
+            height: '10',
+            dimensions_unit: 'cm',
+            weight: '2',
+            weight_unit: 'kg',
+            fee: '5',
+            currency: 'SGD',
+        });
+    });
 });

@@ -83,4 +83,24 @@ module('Unit | Model | sensor', function (hooks) {
             }
         );
     });
+
+    test('displayName falls back through every identifier the sensor might carry', function (assert) {
+        const sensor = this.store.createRecord('sensor', { name: 'Cold chain', serial_number: 'SN-1', internal_id: 'INT-1', imei: '123', public_id: 'sensor_1' });
+        assert.strictEqual(sensor.displayName, 'Cold chain');
+
+        sensor.set('name', null);
+        assert.strictEqual(sensor.displayName, 'SN-1');
+
+        sensor.set('serial_number', null);
+        assert.strictEqual(sensor.displayName, 'INT-1');
+
+        sensor.set('internal_id', null);
+        assert.strictEqual(sensor.displayName, '123');
+
+        sensor.set('imei', null);
+        assert.strictEqual(sensor.displayName, 'sensor_1');
+
+        sensor.set('public_id', null);
+        assert.strictEqual(sensor.displayName, null, 'an entirely unidentified sensor has no display name');
+    });
 });

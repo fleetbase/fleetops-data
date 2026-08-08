@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupTest } from 'dummy/tests/helpers';
-import { FIXED_DATE_LONG, FIXED_DATE_SHORT, THREE_DAYS_DISTANCE, assertDateGetters, assertDefaults, assertRelationships } from 'dummy/tests/helpers/model-contract';
+import { FIXED_DATE_LONG, FIXED_DATE_SHORT, THREE_DAYS_DISTANCE, assertDateGetters, assertDefaults, assertRelationLoader, assertRelationships } from 'dummy/tests/helpers/model-contract';
 
 module('Unit | Model | fuel report', function (hooks) {
     setupTest(hooks);
@@ -52,5 +52,27 @@ module('Unit | Model | fuel report', function (hooks) {
                 createdAgo: THREE_DAYS_DISTANCE,
             }
         );
+    });
+
+    test('loadVehicle fetches the vehicle on demand and caches it', async function (assert) {
+        await assertRelationLoader(assert, {
+            store: this.store,
+            build: () => this.store.createRecord('fuel-report'),
+            method: 'loadVehicle',
+            relationship: 'vehicle',
+            idAttribute: 'vehicle_uuid',
+            modelName: 'vehicle',
+        });
+    });
+
+    test('loadDriver fetches the driver on demand and caches it', async function (assert) {
+        await assertRelationLoader(assert, {
+            store: this.store,
+            build: () => this.store.createRecord('fuel-report'),
+            method: 'loadDriver',
+            relationship: 'driver',
+            idAttribute: 'driver_uuid',
+            modelName: 'driver',
+        });
     });
 });

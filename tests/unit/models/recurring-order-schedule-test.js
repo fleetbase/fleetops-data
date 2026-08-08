@@ -19,4 +19,25 @@ module('Unit | Model | recurring order schedule', function (hooks) {
             service_rate: { kind: 'belongsTo', type: 'service-rate', async: false },
         });
     });
+
+    test('the status flags identify exactly one status at a time', function (assert) {
+        const schedule = this.store.createRecord('recurring-order-schedule');
+        const flags = { active: 'isActive', paused: 'isPaused', canceled: 'isCanceled' };
+
+        for (const status of Object.keys(flags)) {
+            schedule.set('status', status);
+
+            for (const [otherStatus, flag] of Object.entries(flags)) {
+                assert.strictEqual(schedule[flag], status === otherStatus, `${flag} is ${status === otherStatus} while ${status}`);
+            }
+        }
+    });
+
+    test('no flag is true for an unset status', function (assert) {
+        const schedule = this.store.createRecord('recurring-order-schedule');
+
+        assert.false(schedule.isActive);
+        assert.false(schedule.isPaused);
+        assert.false(schedule.isCanceled);
+    });
 });

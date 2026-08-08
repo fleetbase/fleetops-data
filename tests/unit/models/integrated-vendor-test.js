@@ -48,4 +48,8 @@ module('Unit | Model | integrated vendor', function (hooks) {
             { guarded: false }
         );
     });
+
+    test('createdAt is null for an integrated vendor that was never saved', function (assert) {
+        assert.strictEqual(this.store.createRecord('integrated-vendor').createdAt, null);
+    });
 });

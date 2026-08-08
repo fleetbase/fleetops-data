@@ -51,4 +51,72 @@ module('Unit | Model | service rate fee', function (hooks) {
             }
         );
     });
+
+    module('geography_type', function () {
+        test('an explicit selection wins over anything inferred', function (assert) {
+            const fee = this.store.createRecord('service-rate-fee', { selected_geography_type: 'zone', is_fallback: true, service_area_uuid: 'sa_1' });
+
+            assert.strictEqual(fee.geography_type, 'zone', 'the editor’s choice is preserved across a re-render');
+        });
+
+        test('a fallback rule reports itself as the fallback', function (assert) {
+            assert.strictEqual(this.store.createRecord('service-rate-fee', { is_fallback: true }).geography_type, 'fallback');
+        });
+
+        test('a rule bound to a zone identifier reports zone', function (assert) {
+            assert.strictEqual(this.store.createRecord('service-rate-fee', { zone_uuid: 'zone_1' }).geography_type, 'zone');
+        });
+
+        test('a rule bound to a loaded zone record reports zone even without the identifier', function (assert) {
+            const fee = this.store.createRecord('service-rate-fee');
+            fee.set('zone', this.store.push(this.store.normalize('zone', { uuid: 'zone_1' })));
+
+            assert.strictEqual(fee.geography_type, 'zone');
+        });
+
+        test('anything else defaults to a service area', function (assert) {
+            assert.strictEqual(this.store.createRecord('service-rate-fee').geography_type, 'service_area');
+            assert.strictEqual(this.store.createRecord('service-rate-fee', { service_area_uuid: 'sa_1' }).geography_type, 'service_area');
+        });
+    });
+
+    test('toJSON emits the pricing fields the backend accepts and nothing else', function (assert) {
+        const fee = this.store.push(
+            this.store.normalize('service-rate-fee', {
+                uuid: 'fee_1',
+                service_rate_uuid: 'rate_1',
+                service_area_uuid: 'sa_1',
+                zone_uuid: 'zone_1',
+                label: 'Main City',
+                priority: 10,
+                is_fallback: false,
+                distance: 5,
+                distance_unit: 'km',
+                min: 1,
+                max: 5,
+                unit: 'multi_zone_distance',
+                fee: '250',
+                currency: 'SAR',
+                selected_geography_type: 'zone',
+            })
+        );
+
+        assert.deepEqual(fee.toJSON(), {
+            uuid: 'fee_1',
+            service_rate_uuid: 'rate_1',
+            service_area_uuid: 'sa_1',
+            zone_uuid: 'zone_1',
+            label: 'Main City',
+            priority: 10,
+            is_fallback: false,
+            distance: 5,
+            distance_unit: 'km',
+            min: 1,
+            max: 5,
+            unit: 'multi_zone_distance',
+            fee: '250',
+            currency: 'SAR',
+        });
+        assert.notOk('selected_geography_type' in fee.toJSON(), 'the editor-only field stays client-side');
+    });
 });

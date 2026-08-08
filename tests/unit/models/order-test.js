@@ -776,6 +776,15 @@ module('Unit | Model | order', function (hooks) {
             assert.strictEqual(order.tracker_data, trackerData, 'the response is stored on the record');
         });
 
+        test('loadTrackerData defaults to sending no params and no options', async function (assert) {
+            const requests = registerFetch(this, { get: {} });
+            const order = this.store.push({ data: { type: 'order', id: 'order_1', attributes: {} } });
+
+            await order.loadTrackerData();
+
+            assert.deepEqual(requests[0], { verb: 'get', path: 'orders/order_1/tracker', params: {}, options: {} });
+        });
+
         test('loadETA GETs the eta endpoint and caches the result', async function (assert) {
             const eta = { seconds: 900 };
             const requests = registerFetch(this, { get: eta });
@@ -962,6 +971,37 @@ module('Unit | Model | order', function (hooks) {
             order.set('created_at', new Date(0));
 
             assert.notStrictEqual(order.createdAt, null, 'the unix epoch formats rather than reading as absent');
+        });
+    });
+
+    module('remaining edge cases', function () {
+        test('a current waypoint with no name falls back to its street', function (assert) {
+            const order = this.order();
+            const payload = this.store.createRecord('payload');
+            const waypoint = this.store.push({ data: { type: 'waypoint', id: 'wp_1', attributes: { street1: '2 Side St' } } });
+
+            payload.waypoints.pushObject(waypoint);
+            payload.set('current_waypoint_uuid', 'wp_1');
+            order.set('payload', payload);
+
+            assert.strictEqual(order.pickupName, '2 Side St');
+        });
+
+        test('serializeMetaFromGroupedFields defaults to clearing meta', function (assert) {
+            const order = this.order();
+            order.set('meta', { stale: true });
+
+            assert.strictEqual(order.serializeMetaFromGroupedFields(), order);
+            assert.deepEqual(order.meta, { stale: true }, 'an empty group list leaves the existing meta in place');
+        });
+
+        test('loadComments defaults to passing no query options', async function (assert) {
+            const order = this.store.push({ data: { type: 'order', id: 'order_9', attributes: {} } });
+            const calls = recordStoreCalls(this.store, { query: () => [] });
+
+            await order.loadComments();
+
+            assert.deepEqual(calls[0].args[2], {}, 'the options argument defaults to an empty object');
         });
     });
 });

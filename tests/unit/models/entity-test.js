@@ -59,4 +59,26 @@ module('Unit | Model | entity', function (hooks) {
             }
         );
     });
+
+    module('dimension display', function () {
+        test('dimensions renders width by height by depth with the unit', function (assert) {
+            const entity = this.store.createRecord('entity', { length: '30', width: '20', height: '10', dimensions_unit: 'cm' });
+
+            assert.strictEqual(entity.dimensions, '30x20x10 cm');
+        });
+
+        test('each individual dimension is rendered with its unit', function (assert) {
+            const entity = this.store.createRecord('entity', { length: '30', width: '20', height: '10', dimensions_unit: 'cm' });
+
+            assert.strictEqual(entity.displayLength, '30cm');
+            assert.strictEqual(entity.displayWidth, '20cm');
+            assert.strictEqual(entity.displayHeight, '10cm');
+        });
+
+        test('weight is rendered with its own unit, which defaults to grams', function (assert) {
+            const entity = this.store.createRecord('entity', { weight: '500' });
+
+            assert.strictEqual(entity.displayWeight, '500g');
+        });
+    });
 });

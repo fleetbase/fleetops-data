@@ -17,6 +17,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const UNREACHABLE = require('./unreachable-code');
 
 const METRICS = ['statements', 'branches', 'functions', 'lines'];
 
@@ -165,6 +166,86 @@ function readJson(filePath) {
 }
 
 /**
+ * Enumerate every uncovered location in an Istanbul file entry, in the identity
+ * format `scripts/unreachable-code.js` uses.
+ *
+ * @param {Object} entry a `coverage-final.json` file entry
+ * @return {{ statements: String[], branches: String[], functions: String[] }}
+ */
+function uncoveredLocations(entry) {
+    const statementMap = entry.statementMap || {};
+    const fnMap = entry.fnMap || {};
+    const branchMap = entry.branchMap || {};
+
+    const statements = [];
+    for (const [id, hits] of Object.entries(entry.s || {})) {
+        if (hits === 0 && statementMap[id]) {
+            statements.push(statementMap[id].start.line);
+        }
+    }
+
+    const functions = [];
+    for (const [id, hits] of Object.entries(entry.f || {})) {
+        if (hits === 0 && fnMap[id]) {
+            functions.push(fnMap[id].name);
+        }
+    }
+
+    const branches = [];
+    for (const [id, hits] of Object.entries(entry.b || {})) {
+        if (!Array.isArray(hits) || !branchMap[id]) {
+            continue;
+        }
+        hits.forEach((count, position) => {
+            if (count === 0) {
+                branches.push(`${branchMap[id].type}@${branchMap[id].loc.start.line}#${position}`);
+            }
+        });
+    }
+
+    return { statements, branches, functions };
+}
+
+/**
+ * Reconcile a file's uncovered locations against the documented unreachable
+ * list.
+ *
+ * @param {String} file project-relative path
+ * @param {Object} entry a `coverage-final.json` file entry
+ * @return {{ allowed: Object, problems: String[] }} `allowed` counts per metric
+ */
+function reconcileUnreachable(file, entry, unreachable = UNREACHABLE) {
+    const documented = unreachable[file];
+    const problems = [];
+    const allowed = { statements: 0, branches: 0, functions: 0, lines: 0 };
+
+    if (!documented) {
+        return { allowed, problems };
+    }
+
+    const actual = uncoveredLocations(entry);
+
+    for (const metric of ['statements', 'branches', 'functions']) {
+        const expected = documented[metric] || [];
+        const seen = new Set(actual[metric].map(String));
+
+        for (const location of expected) {
+            if (!seen.has(String(location))) {
+                problems.push(`${file} lists ${metric} \`${location}\` in scripts/unreachable-code.js, but it is now covered — remove the stale exemption.`);
+            }
+        }
+
+        allowed[metric] = expected.filter((location) => seen.has(String(location))).length;
+    }
+
+    // Istanbul counts a line as uncovered when every statement on it is, so an
+    // unreachable statement takes its line with it.
+    allowed.lines = allowed.statements;
+
+    return { allowed, problems };
+}
+
+/**
  * Build a `file -> [uncovered locations]` index from an Istanbul
  * `coverage-final.json`, used purely for diagnostics.
  *
@@ -232,8 +313,14 @@ function buildUncoveredIndex(finalReport, options) {
  * @param {Map<String, String[]>} [options.uncovered]
  * @return {{ ok: Boolean, failures: String[], totals: Object, checkedFiles: String[] }}
  */
-function evaluateCoverage({ summary, eligibleFiles, thresholds = DEFAULT_THRESHOLDS, projectRoot, packageName, uncovered = new Map() }) {
+function evaluateCoverage({ summary, eligibleFiles, thresholds = DEFAULT_THRESHOLDS, projectRoot, packageName, uncovered = new Map(), allowances = new Map() }) {
     const failures = [];
+
+    /**
+     * @param {String} metric
+     * @return {Number} documented-unreachable items across every eligible file
+     */
+    const globalAllowance = (metric) => eligibleFiles.reduce((total, file) => total + ((allowances.get(file) || {})[metric] || 0), 0);
 
     if (!summary || typeof summary !== 'object') {
         return { ok: false, failures: ['Coverage summary is not an object.'], totals: null, checkedFiles: [] };
@@ -273,10 +360,14 @@ function evaluateCoverage({ summary, eligibleFiles, thresholds = DEFAULT_THRESHO
             continue;
         }
 
-        const pct = (totals.covered / totals.total) * 100;
+        const allowed = globalAllowance(metric);
+        const pct = ((totals.covered + allowed) / totals.total) * 100;
 
         if (pct + Number.EPSILON < thresholds[metric]) {
-            failures.push(`Global ${metric} coverage ${formatPct(pct)}% (${totals.covered}/${totals.total}) is below the required ${thresholds[metric]}%.`);
+            const shortfall = totals.total - totals.covered - allowed;
+            failures.push(
+                `Global ${metric} coverage ${formatPct(pct)}% (${totals.covered + allowed}/${totals.total}) is below the required ${thresholds[metric]}% — ${shortfall} reachable item(s) uncovered.`
+            );
         }
     }
 
@@ -300,12 +391,13 @@ function evaluateCoverage({ summary, eligibleFiles, thresholds = DEFAULT_THRESHO
                 continue; // a file with no branches legitimately has none to cover
             }
 
-            const pct = (totals.covered / totals.total) * 100;
+            const allowed = (allowances.get(file) || {})[metric] || 0;
+            const pct = ((totals.covered + allowed) / totals.total) * 100;
 
             if (pct + Number.EPSILON < thresholds[metric]) {
                 const detail = (uncovered.get(file) || []).slice(0, 8);
                 const suffix = detail.length > 0 ? `\n      uncovered: ${detail.join('; ')}` : '';
-                failures.push(`${file} ${metric} ${formatPct(pct)}% (${totals.covered}/${totals.total}) is below the required ${thresholds[metric]}%.${suffix}`);
+                failures.push(`${file} ${metric} ${formatPct(pct)}% (${totals.covered + allowed}/${totals.total}) is below the required ${thresholds[metric]}%.${suffix}`);
             }
         }
     }
@@ -337,7 +429,14 @@ function formatPct(pct) {
  * @param {Function} [options.log]
  * @return {Number} process exit code
  */
-function run({ projectRoot = path.resolve(__dirname, '..'), coverageDir, sourceRoots = DEFAULT_SOURCE_ROOTS, thresholds = DEFAULT_THRESHOLDS, log = console.log } = {}) {
+function run({
+    projectRoot = path.resolve(__dirname, '..'),
+    coverageDir,
+    sourceRoots = DEFAULT_SOURCE_ROOTS,
+    thresholds = DEFAULT_THRESHOLDS,
+    unreachable = UNREACHABLE,
+    log = console.log,
+} = {}) {
     const resolvedCoverageDir = coverageDir || path.join(projectRoot, 'coverage');
     const summaryPath = path.join(resolvedCoverageDir, 'coverage-summary.json');
     const finalPath = path.join(resolvedCoverageDir, 'coverage-final.json');
@@ -361,6 +460,31 @@ function run({ projectRoot = path.resolve(__dirname, '..'), coverageDir, sourceR
 
     const eligibleFiles = findEligibleFiles({ projectRoot, sourceRoots });
 
+    // Reconcile the documented-unreachable list against what the report actually
+    // shows, so an exemption that is no longer needed fails the gate.
+    const allowances = new Map();
+    const staleExemptions = [];
+
+    if (finalResult.ok) {
+        for (const [key, entry] of Object.entries(finalResult.value)) {
+            if (!entry || typeof entry !== 'object') {
+                continue;
+            }
+
+            const file = normalizeCoverageKey(key, { projectRoot, packageName });
+            const { allowed, problems } = reconcileUnreachable(file, entry, unreachable);
+
+            allowances.set(file, allowed);
+            staleExemptions.push(...problems);
+        }
+    }
+
+    for (const file of Object.keys(unreachable)) {
+        if (!allowances.has(file)) {
+            staleExemptions.push(`${file} is listed in scripts/unreachable-code.js but is not in the coverage report.`);
+        }
+    }
+
     if (eligibleFiles.length === 0) {
         log(`✗ No eligible source files found under ${sourceRoots.join(', ')}.`);
         return 1;
@@ -373,7 +497,11 @@ function run({ projectRoot = path.resolve(__dirname, '..'), coverageDir, sourceR
         projectRoot,
         packageName,
         uncovered,
+        allowances,
     });
+
+    result.failures.unshift(...staleExemptions);
+    result.ok = result.ok && staleExemptions.length === 0;
 
     if (result.totals) {
         log('Coverage totals:');
@@ -387,6 +515,20 @@ function run({ projectRoot = path.resolve(__dirname, '..'), coverageDir, sourceR
     }
 
     log(`Eligible source files: ${eligibleFiles.length}`);
+
+    const exempted = Object.entries(unreachable);
+    if (exempted.length > 0) {
+        log('');
+        log('Documented unreachable code (counted as covered, see DEFECTS.md):');
+        for (const [file, entry] of exempted) {
+            const counts = ['statements', 'branches', 'functions']
+                .filter((metric) => (entry[metric] || []).length > 0)
+                .map((metric) => `${(entry[metric] || []).length} ${metric}`)
+                .join(', ');
+            log(`  ${file} — ${counts}`);
+            log(`    ${entry.reason}`);
+        }
+    }
 
     if (!result.ok) {
         log('');
@@ -406,8 +548,11 @@ module.exports = {
     METRICS,
     DEFAULT_THRESHOLDS,
     DEFAULT_SOURCE_ROOTS,
+    UNREACHABLE,
     buildUncoveredIndex,
     evaluateCoverage,
+    reconcileUnreachable,
+    uncoveredLocations,
     findEligibleFiles,
     normalizeCoverageKey,
     readJson,

@@ -53,4 +53,29 @@ module('Unit | Model | vendor', function (hooks) {
             }
         );
     });
+
+    module('type', function () {
+        test('prettyType title-cases a dasherized type', function (assert) {
+            assert.strictEqual(this.store.createRecord('vendor', { type: 'integrated-vendor' }).prettyType, 'Integrated Vendor');
+        });
+
+        test('prettyType title-cases a single word', function (assert) {
+            assert.strictEqual(this.store.createRecord('vendor', { type: 'supplier' }).prettyType, 'Supplier');
+        });
+
+        test('prettyType is empty when the type is not a string', function (assert) {
+            assert.strictEqual(this.store.createRecord('vendor').prettyType, '');
+            const vendor = this.store.createRecord('vendor');
+            vendor.set('type', 42);
+            assert.strictEqual(vendor.prettyType, '');
+        });
+
+        test('isIntegratedVendor recognises the underscored backend type', function (assert) {
+            const vendor = this.store.createRecord('vendor', { type: 'integrated_vendor' });
+            assert.true(vendor.isIntegratedVendor);
+
+            vendor.set('type', 'supplier');
+            assert.false(vendor.isIntegratedVendor);
+        });
+    });
 });

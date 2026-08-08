@@ -30,4 +30,16 @@ module('Unit | Model | fuel provider transaction', function (hooks) {
             {}
         );
     });
+
+    test('isMatched is true only once the transaction has been reconciled', function (assert) {
+        const transaction = this.store.createRecord('fuel-provider-transaction');
+
+        assert.false(transaction.isMatched);
+
+        transaction.set('sync_status', 'pending');
+        assert.false(transaction.isMatched);
+
+        transaction.set('sync_status', 'matched');
+        assert.true(transaction.isMatched);
+    });
 });

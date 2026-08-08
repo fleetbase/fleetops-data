@@ -38,4 +38,15 @@ module('Unit | Model | maintenance subject', function (hooks) {
             }
         );
     });
+
+    test('displayName prefers the server display name, then the name, then the public id', function (assert) {
+        const subject = this.store.createRecord('maintenance-subject', { display_name: 'Van 1 (fleet)', name: 'Van 1', public_id: 'veh_1' });
+        assert.strictEqual(subject.displayName, 'Van 1 (fleet)');
+
+        subject.set('display_name', null);
+        assert.strictEqual(subject.displayName, 'Van 1');
+
+        subject.set('name', null);
+        assert.strictEqual(subject.displayName, 'veh_1');
+    });
 });

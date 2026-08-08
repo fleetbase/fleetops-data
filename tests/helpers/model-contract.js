@@ -274,3 +274,59 @@ export function assertPointAccessors(assert, record, { attribute = 'location' } 
     record.set(attribute, { type: 'Point', coordinates: [180, 90] });
     assert.true(record.hasValidCoordinates, `${label} accepts the coordinate extremes`);
 }
+
+/**
+ * Assert the contract of the promise-based `load<Relation>()` helpers that
+ * fuel-report, issue, driver and vehicle all share.
+ *
+ * Each one fetches the related record when the model carries its identifier,
+ * assigns it, and resolves; otherwise it resolves with whatever is already in
+ * hand. A rejected fetch propagates rather than being swallowed.
+ *
+ * @param {Assert} assert
+ * @param {Object} options
+ * @param {Store} options.store
+ * @param {Function} options.build returns a fresh record under test
+ * @param {String} options.method the loader method name
+ * @param {String} options.relationship the relationship it populates
+ * @param {String} options.idAttribute the identifier attribute it reads
+ * @param {String} options.modelName the related model name
+ */
+export async function assertRelationLoader(assert, { store, build, method, relationship, idAttribute, modelName }) {
+    const calls = [];
+    const related = store.push(store.normalize(modelName, { uuid: 'related_1' }));
+    const originalFindRecord = store.findRecord;
+
+    store.findRecord = function (...args) {
+        calls.push(args);
+        return Promise.resolve(related);
+    };
+
+    try {
+        const record = build();
+        record.set(idAttribute, 'related_1');
+
+        const loaded = await record[method]();
+
+        // Reference comparisons use assert.true so a failure does not make QUnit
+        // walk an Ember Data record and trip its computed properties.
+        assert.true(loaded === related, `${method} resolves with the fetched record`);
+        assert.strictEqual(record.belongsTo(relationship).id(), 'related_1', `${method} assigns ${relationship}`);
+        assert.deepEqual(calls[0], [modelName, 'related_1'], `${method} fetches the ${modelName} named by ${idAttribute}`);
+
+        const withoutId = build();
+        calls.length = 0;
+
+        assert.notOk(await withoutId[method](), `${method} resolves with the empty relationship when there is no identifier`);
+        assert.deepEqual(calls, [], `${method} makes no request without an identifier`);
+
+        store.findRecord = () => Promise.reject(new Error('network down'));
+
+        const failing = build();
+        failing.set(idAttribute, 'related_1');
+
+        await assert.rejects(failing[method](), /network down/, `${method} propagates a failed fetch rather than swallowing it`);
+    } finally {
+        store.findRecord = originalFindRecord;
+    }
+}

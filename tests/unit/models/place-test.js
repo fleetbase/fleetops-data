@@ -55,4 +55,55 @@ module('Unit | Model | place', function (hooks) {
     test('the GeoJSON point accessors read the location attribute', function (assert) {
         assertPointAccessors(assert, this.store.createRecord('place'), { attribute: 'location' });
     });
+
+    module('display and serialization', function () {
+        test('displayName prefers the name, then the address, then the street', function (assert) {
+            const place = this.store.createRecord('place', { name: 'Depot', address: '1 Main St, Singapore', street1: '1 Main St' });
+            assert.strictEqual(place.displayName, 'Depot');
+
+            place.set('name', null);
+            assert.strictEqual(place.displayName, '1 Main St, Singapore');
+
+            place.set('address', null);
+            assert.strictEqual(place.displayName, '1 Main St');
+        });
+
+        test('displayName is undefined for a place with no identity at all', function (assert) {
+            assert.strictEqual(this.store.createRecord('place').displayName, undefined);
+        });
+
+        test('toJSON emits the address fields the backend expects, keyed by uuid', function (assert) {
+            const place = this.store.push(
+                this.store.normalize('place', {
+                    uuid: 'place_1',
+                    vendor_uuid: 'vendor_1',
+                    name: 'Depot',
+                    phone: '+6560000000',
+                    type: 'warehouse',
+                    address: '1 Main St, Singapore',
+                    street1: '1 Main St',
+                    city: 'Singapore',
+                    country: 'SG',
+                    meta: { dock: 3 },
+                })
+            );
+
+            const json = place.toJSON();
+
+            assert.strictEqual(json.uuid, 'place_1', 'the Ember Data id is emitted as uuid');
+            assert.strictEqual(json.vendor_uuid, 'vendor_1');
+            assert.strictEqual(json.name, 'Depot');
+            assert.strictEqual(json.city, 'Singapore');
+            assert.deepEqual(json.meta, { dock: 3 });
+            assert.notOk('public_id' in json, 'fields the backend does not accept are left out');
+        });
+
+        test('toJSON of an unsaved place has no uuid', function (assert) {
+            assert.strictEqual(this.store.createRecord('place').toJSON().uuid, null);
+        });
+    });
+
+    test('a place starts unselected', function (assert) {
+        assert.false(this.store.createRecord('place').selected, 'selection is UI state that starts cleared');
+    });
 });
