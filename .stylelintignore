@@ -4,5 +4,8 @@
 # compiled output
 /dist/
 
+# generated coverage reports
+/coverage/
+
 # addons
 /.node_modules.ember-try/

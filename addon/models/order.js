@@ -155,7 +155,7 @@ export default class OrderModel extends Model {
             return payload.waypoints.firstObject.name ?? payload.waypoints.firstObject.street1;
         }
 
-        if (meta.pickup_is_driver_location === true) {
+        if (meta?.pickup_is_driver_location === true) {
             return 'Dynamic';
         }
 
@@ -173,7 +173,7 @@ export default class OrderModel extends Model {
             return payload.waypoints.lastObject.name ?? payload.waypoints.lastObject.street1;
         }
 
-        if (meta.pickup_is_driver_location === true) {
+        if (meta?.pickup_is_driver_location === true) {
             return 'Dynamic';
         }
 

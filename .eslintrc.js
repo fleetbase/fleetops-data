@@ -35,6 +35,7 @@ module.exports = {
                 './testem.js',
                 './blueprints/*/index.js',
                 './config/**/*.js',
+                './scripts/**/*.js',
                 './tests/dummy/config/**/*.js',
             ],
             parserOptions: {
@@ -45,6 +46,14 @@ module.exports = {
                 node: true,
             },
             extends: ['plugin:n/recommended'],
+            rules: {
+                // `ember-cli-code-coverage` is a devDependency that is only
+                // required when COVERAGE=true, which never happens in a consumer
+                // build. The coverage gate under `scripts/` is likewise a
+                // development-only tool that ships with the repository, not with
+                // the published package.
+                'n/no-unpublished-require': 'off',
+            },
         },
     ],
 };

@@ -2,86 +2,125 @@ name: Ember CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     tags:
       - 'v*'
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+# Least privilege by default; the publishing jobs opt into what they need.
+permissions:
+  contents: read
+
+# A newer push to the same branch or pull request supersedes the run in flight.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   NODE_VERSION: 22.x
 
 jobs:
-  build:
+  test:
+    name: Lint, test, coverage and build
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Setup Node.js ${{ env.NODE_VERSION }}
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2.0.1
-      with:
-        version: latest
-
-    - name: Install Dependencies
-      run: pnpm install
-
-    - name: Build
-      run: pnpm run build
-
-  npm_publish:
-    needs: build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Setup Node.js ${{ env.NODE_VERSION }}
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2.0.1
-      with:
-        version: latest
-
-    - name: Install Dependencies
-      run: pnpm install
-
-    - name: Build
-      run: pnpm run build
-
-    - name: Set up npm
-      run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
-
-    - name: Publish
-      run: npm publish --access public
-
-  github_publish:
-    needs: build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-      - uses: actions/checkout@v2
+      # `version` is intentionally omitted: pnpm/action-setup reads the pinned
+      # version from the `packageManager` field in package.json.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+      # The coverage gate is the thing that proves the coverage number; test it
+      # before trusting what it reports.
+      - name: Test the coverage gate
+        run: pnpm run test:coverage-gate
+
+      - name: Run tests with coverage
+        run: pnpm run coverage
+
+      - name: Enforce 100% coverage
+        run: pnpm run coverage:check
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lcov.info
+          flags: fleetops-data
+          name: fleetops-data
+          fail_ci_if_error: true
+          # Forked pull requests cannot read secrets; Codecov accepts tokenless
+          # uploads from public repositories, so this is empty rather than absent.
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Build
+        run: pnpm run build
+
+  npm_publish:
+    name: Publish to npm
+    needs: test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2.0.1
-        with:
-          version: latest
+        uses: pnpm/action-setup@v4
 
-      - name: Install Dependencies
-        run: pnpm install
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Set up npm
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
+
+      - name: Publish
+        run: npm publish --access public
+
+  github_publish:
+    name: Publish to GitHub Packages
+    needs: test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Build
         run: pnpm run build

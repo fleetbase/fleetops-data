@@ -244,7 +244,9 @@ module('Unit | Model | service rate', function (hooks) {
 
         serviceRate.addPerDropRateFee();
 
-        const addedFee = serviceRate.rate_fees[1];
+        // `rate_fees` is an async hasMany, so it is a PromiseManyArray rather
+        // than an indexable array until it is materialized.
+        const addedFee = serviceRate.rate_fees.toArray()[1];
 
         assert.strictEqual(addedFee.min, 3);
         assert.strictEqual(addedFee.max, 8);
@@ -260,12 +262,16 @@ module('Unit | Model | service rate', function (hooks) {
         serviceRate.addMultiZoneDistanceRule({ label: 'Main City', fee: 250 });
         serviceRate.addMultiZoneDistanceFallbackRule();
 
-        assert.strictEqual(serviceRate.rate_fees.length, 2);
-        assert.strictEqual(serviceRate.rate_fees[0].unit, 'multi_zone_distance');
-        assert.strictEqual(serviceRate.rate_fees[0].distance_unit, 'km');
-        assert.strictEqual(serviceRate.rate_fees[0].currency, 'SAR');
-        assert.false(serviceRate.rate_fees[0].is_fallback);
-        assert.true(serviceRate.rate_fees[1].is_fallback);
+        // `rate_fees` is an async hasMany, so it is a PromiseManyArray rather
+        // than an indexable array until it is materialized.
+        const fees = serviceRate.rate_fees.toArray();
+
+        assert.strictEqual(fees.length, 2);
+        assert.strictEqual(fees[0].unit, 'multi_zone_distance');
+        assert.strictEqual(fees[0].distance_unit, 'km');
+        assert.strictEqual(fees[0].currency, 'SAR');
+        assert.false(fees[0].is_fallback);
+        assert.true(fees[1].is_fallback);
     });
 
     test('rateFees prefers persisted per-drop fees over duplicate unsaved rows', function (assert) {
