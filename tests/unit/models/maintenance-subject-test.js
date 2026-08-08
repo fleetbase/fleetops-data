@@ -2,7 +2,7 @@ import { module, test } from 'qunit';
 import { setupTest } from 'dummy/tests/helpers';
 import { FIXED_DATE_LONG, FIXED_DATE_SHORT, THREE_DAYS_DISTANCE, assertDateGetters } from 'dummy/tests/helpers/model-contract';
 
-module('Unit | Model | service quote item', function (hooks) {
+module('Unit | Model | maintenance subject', function (hooks) {
     setupTest(hooks);
 
     hooks.beforeEach(function () {
@@ -12,7 +12,7 @@ module('Unit | Model | service quote item', function (hooks) {
     test('updated_at renders its formatting getters', function (assert) {
         assertDateGetters(
             assert,
-            this.store.createRecord('service-quote-item'),
+            this.store.createRecord('maintenance-subject'),
             'updated_at',
             {
                 updatedAt: FIXED_DATE_LONG,
@@ -27,7 +27,7 @@ module('Unit | Model | service quote item', function (hooks) {
     test('created_at renders its formatting getters', function (assert) {
         assertDateGetters(
             assert,
-            this.store.createRecord('service-quote-item'),
+            this.store.createRecord('maintenance-subject'),
             'created_at',
             {
                 createdAt: FIXED_DATE_LONG,

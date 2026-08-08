@@ -1,8 +1,8 @@
 import { module, test } from 'qunit';
 import { setupTest } from 'dummy/tests/helpers';
-import { FIXED_DATE_LONG, FIXED_DATE_SHORT, THREE_DAYS_DISTANCE, assertDateGetters, assertRelationships } from 'dummy/tests/helpers/model-contract';
+import { FIXED_DATE_DAY_MONTH_YEAR, FIXED_DATE_LONG, THREE_DAYS_DISTANCE, assertDateGetters, assertRelationships } from 'dummy/tests/helpers/model-contract';
 
-module('Unit | Model | issue', function (hooks) {
+module('Unit | Model | manifest', function (hooks) {
     setupTest(hooks);
 
     hooks.beforeEach(function () {
@@ -10,25 +10,20 @@ module('Unit | Model | issue', function (hooks) {
     });
 
     test('relationships target the right models with the right loading strategy', function (assert) {
-        assertRelationships(assert, this.store, 'issue', {
-            reporter: { kind: 'belongsTo', type: 'user', async: false },
-            assignee: { kind: 'belongsTo', type: 'user', async: false },
-            vehicle: { kind: 'belongsTo', type: 'vehicle', async: false },
+        assertRelationships(assert, this.store, 'manifest', {
             driver: { kind: 'belongsTo', type: 'driver', async: false },
-            order: { kind: 'belongsTo', type: 'order', async: false },
-            files: { kind: 'hasMany', type: 'file', async: false },
-            custom_field_values: { kind: 'hasMany', type: 'custom-field-value', async: false },
+            vehicle: { kind: 'belongsTo', type: 'vehicle', async: false },
+            stops: { kind: 'hasMany', type: 'manifest-stop', async: false },
         });
     });
 
     test('updated_at renders its formatting getters', function (assert) {
         assertDateGetters(
             assert,
-            this.store.createRecord('issue'),
+            this.store.createRecord('manifest'),
             'updated_at',
             {
                 updatedAt: FIXED_DATE_LONG,
-                updatedAtShort: FIXED_DATE_SHORT,
             },
             {
                 updatedAgo: THREE_DAYS_DISTANCE,
@@ -39,15 +34,26 @@ module('Unit | Model | issue', function (hooks) {
     test('created_at renders its formatting getters', function (assert) {
         assertDateGetters(
             assert,
-            this.store.createRecord('issue'),
+            this.store.createRecord('manifest'),
             'created_at',
             {
                 createdAt: FIXED_DATE_LONG,
-                createdAtShort: FIXED_DATE_SHORT,
             },
             {
                 createdAgo: THREE_DAYS_DISTANCE,
             }
+        );
+    });
+
+    test('scheduled_date renders its formatting getters', function (assert) {
+        assertDateGetters(
+            assert,
+            this.store.createRecord('manifest'),
+            'scheduled_date',
+            {
+                scheduledDateFormatted: FIXED_DATE_DAY_MONTH_YEAR,
+            },
+            {}
         );
     });
 });

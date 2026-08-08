@@ -40,23 +40,26 @@ module('Unit | Serializer | driver', function (hooks) {
 
     module('relationships the driver never owns', function () {
         /**
-         * These four are read-only from the driver's point of view: the server
-         * decides which fleets a driver belongs to, which job is current, which
-         * user account backs the driver, and which vendor employs them. Sending
-         * them back would let a stale client clobber server state.
+         * These are read-only from the driver's point of view: the server decides
+         * which user account backs the driver, which vendor employs them, and
+         * which job is current. Sending the whole record back would let a stale
+         * client clobber server state — the identifier alone is enough.
          */
-        const NOT_WRITTEN_BACK = ['user', 'vendor', 'current_job'];
+        const NOT_EMBEDDED = [
+            { key: 'user', modelName: 'user' },
+            { key: 'vendor', modelName: 'vendor' },
+            { key: 'current_job', modelName: 'order' },
+        ];
 
-        for (const key of NOT_WRITTEN_BACK) {
-            test(`${key} is omitted from the outgoing payload`, function (assert) {
+        for (const { key, modelName } of NOT_EMBEDDED) {
+            test(`${key} is linked by identifier rather than embedded`, function (assert) {
                 const driver = this.store.createRecord('driver');
-                const related = this.store.push(this.store.normalize(key === 'current_job' ? 'order' : key === 'user' ? 'user' : 'vendor', { uuid: 'rel_1' }));
-                driver.set(key, related);
+                driver.set(key, this.store.push(this.store.normalize(modelName, { uuid: 'rel_1' })));
 
                 const json = driver.serialize();
 
-                assert.notOk(json[key], `${key} is not embedded`);
-                assert.notOk(json[`${key}_uuid`], `${key} is not even linked by identifier`);
+                assert.notOk(json[key], `the whole ${key} record is not written back`);
+                assert.strictEqual(json[`${key}_uuid`], 'rel_1', `${key} is still linked by uuid`);
             });
         }
 

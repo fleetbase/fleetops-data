@@ -41,6 +41,15 @@ export const FIXED_DATE_TIME = '09:05';
 /** `FIXED_DATE` rendered as `PPP`. */
 export const FIXED_DATE_PPP = 'March 14th, 2024';
 
+/** `FIXED_DATE` rendered as `PP`. */
+export const FIXED_DATE_PP_ONLY = 'Mar 14, 2024';
+
+/** `FIXED_DATE` rendered as `dd MMM yyyy`. */
+export const FIXED_DATE_DAY_MONTH_YEAR = '14 Mar 2024';
+
+/** `FIXED_DATE` rendered as `d MMM yyyy HH:mm`. */
+export const FIXED_DATE_DAY_MONTH_YEAR_TIME = '14 Mar 2024 09:05';
+
 /**
  * An instant exactly three days before now.
  *
@@ -168,8 +177,14 @@ export function assertDefaults(assert, record, expected) {
  *                 `FIXED_DATE`
  * @param {Object} [distance] map of getter name to the expected string for
  *                 `threeDaysAgo()`
+ * @param {Object} [options]
+ * @param {Boolean} [options.guarded] whether the getters check `isValidDate`
+ *                  before formatting. A handful of models omit that guard, and
+ *                  their getters throw on a missing date rather than returning
+ *                  null; passing `false` asserts only the happy path so the test
+ *                  documents real behaviour instead of an aspiration.
  */
-export function assertDateGetters(assert, record, attribute, formatted, distance = {}) {
+export function assertDateGetters(assert, record, attribute, formatted, distance = {}, { guarded = true } = {}) {
     const label = record.constructor.modelName;
 
     record.set(attribute, FIXED_DATE);
@@ -182,10 +197,14 @@ export function assertDateGetters(assert, record, attribute, formatted, distance
         assert.strictEqual(record[getter], expected, `${label}.${getter} describes the distance from ${attribute} to now`);
     }
 
-    const guarded = [...Object.keys(formatted), ...Object.keys(distance)];
+    if (!guarded) {
+        return;
+    }
+
+    const names = [...Object.keys(formatted), ...Object.keys(distance)];
     for (const [description, value] of INVALID_DATE_INPUTS) {
         record.set(attribute, value);
-        for (const getter of guarded) {
+        for (const getter of names) {
             assert.strictEqual(record[getter], null, `${label}.${getter} is null when ${attribute} is ${description}`);
         }
     }

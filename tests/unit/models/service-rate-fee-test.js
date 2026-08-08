@@ -1,42 +1,54 @@
 import { module, test } from 'qunit';
-
 import { setupTest } from 'dummy/tests/helpers';
+import { FIXED_DATE_LONG, FIXED_DATE_SHORT, THREE_DAYS_DISTANCE, assertDateGetters, assertDefaults, assertRelationships } from 'dummy/tests/helpers/model-contract';
 
 module('Unit | Model | service rate fee', function (hooks) {
     setupTest(hooks);
 
-    // Replace this with your real tests.
-    test('it exists', function (assert) {
-        let store = this.owner.lookup('service:store');
-        let model = store.createRecord('service-rate-fee', {});
-        assert.ok(model);
+    hooks.beforeEach(function () {
+        this.store = this.owner.lookup('service:store');
     });
 
-    test('geography type prefers transient selected geography type', function (assert) {
-        let store = this.owner.lookup('service:store');
-        let model = store.createRecord('service-rate-fee', {
-            service_area_uuid: 'service_area_1',
+    test('relationships target the right models with the right loading strategy', function (assert) {
+        assertRelationships(assert, this.store, 'service-rate-fee', {
+            service_area: { kind: 'belongsTo', type: 'service-area' },
+            zone: { kind: 'belongsTo', type: 'zone' },
         });
-
-        model.set('selected_geography_type', 'zone');
-
-        assert.strictEqual(model.geography_type, 'zone');
     });
 
-    test('geography type derives from saved relationships when no transient type is selected', function (assert) {
-        let store = this.owner.lookup('service:store');
-        let zoneRule = store.createRecord('service-rate-fee', {
-            zone_uuid: 'zone_1',
+    test('a new record applies its configured defaults', function (assert) {
+        assertDefaults(assert, this.store.createRecord('service-rate-fee'), {
+            is_fallback: false,
         });
-        let serviceAreaRule = store.createRecord('service-rate-fee', {
-            service_area_uuid: 'service_area_1',
-        });
-        let fallbackRule = store.createRecord('service-rate-fee', {
-            is_fallback: true,
-        });
+    });
 
-        assert.strictEqual(zoneRule.geography_type, 'zone');
-        assert.strictEqual(serviceAreaRule.geography_type, 'service_area');
-        assert.strictEqual(fallbackRule.geography_type, 'fallback');
+    test('updated_at renders its formatting getters', function (assert) {
+        assertDateGetters(
+            assert,
+            this.store.createRecord('service-rate-fee'),
+            'updated_at',
+            {
+                updatedAt: FIXED_DATE_LONG,
+                updatedAtShort: FIXED_DATE_SHORT,
+            },
+            {
+                updatedAgo: THREE_DAYS_DISTANCE,
+            }
+        );
+    });
+
+    test('created_at renders its formatting getters', function (assert) {
+        assertDateGetters(
+            assert,
+            this.store.createRecord('service-rate-fee'),
+            'created_at',
+            {
+                createdAt: FIXED_DATE_LONG,
+                createdAtShort: FIXED_DATE_SHORT,
+            },
+            {
+                createdAgo: THREE_DAYS_DISTANCE,
+            }
+        );
     });
 });
