@@ -1,4 +1,5 @@
 import Feature from '@fleetbase/fleetops-data/utils/geojson/feature';
+import GeometryCollection from '@fleetbase/fleetops-data/utils/geojson/geometry-collection';
 import Point from '@fleetbase/fleetops-data/utils/geojson/point';
 import { module, test } from 'qunit';
 
@@ -37,12 +38,22 @@ module('Unit | Utility | geojson/feature', function () {
         });
     });
 
-    test('a GeoJson instance is serialized into the feature geometry', function (assert) {
-        const feature = new Feature(new Point([103.8198, 1.3521]));
+    test('a Point instance is recognised by its type and coordinates, not by its class', function (assert) {
+        const point = new Point([103.8198, 1.3521]);
+        const feature = new Feature(point);
 
         assert.strictEqual(feature.type, 'Feature');
-        assert.strictEqual(feature.geometry.type, 'Point');
-        assert.deepEqual(feature.geometry.coordinates, [103.8198, 1.3521]);
+        assert.strictEqual(feature.geometry, point, 'a geometry that already carries type and coordinates is referenced directly');
+    });
+
+    test('a GeoJson instance with no coordinates of its own is serialized into the geometry', function (assert) {
+        const collection = new GeometryCollection([{ type: 'Point', coordinates: [103.8198, 1.3521] }]);
+        const feature = new Feature(collection);
+
+        assert.strictEqual(feature.type, 'Feature');
+        assert.strictEqual(feature.geometry.type, 'GeometryCollection', 'the collection is flattened through toJSON');
+        assert.deepEqual(feature.geometry.geometries, [{ type: 'Point', coordinates: [103.8198, 1.3521] }]);
+        assert.notOk(feature.geometry instanceof GeometryCollection, 'and what lands on the feature is plain JSON');
     });
 
     test('no input is rejected', function (assert) {

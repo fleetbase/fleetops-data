@@ -4,39 +4,33 @@ import ApplicationSerializer from '@fleetbase/ember-core/serializers/application
 import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
 import { assertEmbeddedAttrs, assertNormalizesUuidAsId, assertPrimaryKeyIsUuid } from 'dummy/tests/helpers/serializer-contract';
 
-module('Unit | Serializer | fleet driver', function (hooks) {
+module('Unit | Serializer | fuel provider transaction', function (hooks) {
     setupTest(hooks);
 
     hooks.beforeEach(function () {
         this.store = this.owner.lookup('service:store');
-        this.serializer = this.store.serializerFor('fleet-driver');
+        this.serializer = this.store.serializerFor('fuel-provider-transaction');
     });
 
     test('it is a Fleetbase application serializer that embeds records', function (assert) {
         assert.ok(this.serializer instanceof ApplicationSerializer, 'it inherits the Fleetbase wire conventions');
         assert.ok(EmbeddedRecordsMixin.detect(this.serializer), 'it can inline related records');
-        assertPrimaryKeyIsUuid(assert, this.store, 'fleet-driver');
+        assertPrimaryKeyIsUuid(assert, this.store, 'fuel-provider-transaction');
     });
 
     test('it declares exactly the expected relationship serialization contract', function (assert) {
-        assertEmbeddedAttrs(assert, this.store, 'fleet-driver', {});
+        assertEmbeddedAttrs(assert, this.store, 'fuel-provider-transaction', {});
     });
 
     test('a server payload is normalized onto a record keyed by uuid', function (assert) {
-        assertNormalizesUuidAsId(assert, this.store, 'fleet-driver');
+        const record = assertNormalizesUuidAsId(assert, this.store, 'fuel-provider-transaction', { provider: 'contract-value' });
+
+        assert.strictEqual(record.provider, 'contract-value', 'the attribute survives normalization');
     });
 
-    test('the fleet relationship is linked by uuid when it is not embedded', function (assert) {
-        const related = this.store.push(this.store.normalize('fleet', { uuid: 'related_1' }));
-        const record = this.store.createRecord('fleet-driver');
-        record.set('fleet', related);
+    test('a record serializes its attributes back onto the wire', function (assert) {
+        const record = this.store.createRecord('fuel-provider-transaction', { provider: 'contract-value' });
 
-        assert.strictEqual(record.serialize().fleet_uuid, 'related_1', 'the application serializer always adds the identifier');
-    });
-
-    test('an unset fleet contributes no identifier', function (assert) {
-        const json = this.store.createRecord('fleet-driver').serialize();
-
-        assert.notOk(json.fleet_uuid, 'a relationship that was never set is simply absent');
+        assert.strictEqual(record.serialize().provider, 'contract-value');
     });
 });

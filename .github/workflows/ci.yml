@@ -53,9 +53,8 @@ jobs:
       - name: Run tests with coverage
         run: pnpm run coverage
 
-      - name: Enforce 100% coverage
-        run: pnpm run coverage:check
-
+      # Uploaded before the gate so a shortfall is still visible on the pull
+      # request rather than being hidden behind a failed step.
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -66,6 +65,9 @@ jobs:
           # Forked pull requests cannot read secrets; Codecov accepts tokenless
           # uploads from public repositories, so this is empty rather than absent.
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Enforce 100% coverage
+        run: pnpm run coverage:check
 
       - name: Build
         run: pnpm run build
