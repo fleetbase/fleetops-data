@@ -1,5 +1,7 @@
 # @fleetbase/fleetops-data
 
+[![codecov](https://codecov.io/gh/fleetbase/fleetops-data/graph/badge.svg)](https://codecov.io/gh/fleetbase/fleetops-data)
+
 [Short description of the addon.]
 
 

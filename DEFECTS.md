@@ -243,3 +243,12 @@ Istanbul identity. `pnpm run coverage:check` reads that list and:
 
 The exemptions are per-location, never per-file and never per-directory. Nothing
 else in the addon is excluded from coverage.
+
+---
+
+## Unrelated discrepancy noticed in passing
+
+`README.md` states the project is licensed under the MIT License, while
+`package.json` declares `AGPL-3.0-or-later` and `LICENSE.md` contains the AGPL
+text. Not touched here — correcting a stated licence is not a coverage change —
+but the README is wrong about which licence applies.
