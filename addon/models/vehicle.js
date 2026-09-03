@@ -22,6 +22,9 @@ export default class VehicleModel extends Model {
     @belongsTo('driver', { async: false }) driver;
     @belongsTo('vendor', { async: false }) vendor;
     @hasMany('device', { async: false }) devices;
+    @hasMany('trailer', { async: false }) trailers;
+    @hasMany('asset-connection', { async: false }) trailer_connections;
+    @hasMany('equipment', { async: false }) equipments;
     @hasMany('custom-field-value', { async: false }) custom_field_values;
 
     /** @attributes */

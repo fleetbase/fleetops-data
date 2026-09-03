@@ -81,7 +81,7 @@ export default class DeviceSerializer extends ApplicationSerializer.extend(Embed
             .replace(/^attachable-/, '')
             .toLowerCase();
 
-        if (!['vehicle', 'asset'].includes(type)) {
+        if (!['vehicle', 'asset', 'trailer'].includes(type)) {
             return undefined;
         }
 

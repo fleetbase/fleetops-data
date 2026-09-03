@@ -15,6 +15,7 @@ export default class EquipmentModel extends Model {
     /** @relationships */
     @belongsTo('warranty', { async: false }) warranty;
     @belongsTo('file', { async: false }) photo;
+    @belongsTo('attachable', { polymorphic: true, async: false }) equipable;
     @hasMany('maintenance', { async: false }) maintenances;
     @hasMany('custom-field-value', { async: false }) custom_field_values;
 
