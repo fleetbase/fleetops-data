@@ -4,6 +4,7 @@ import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
 export default class TrailerSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
     get attrs() {
         return {
+            category: { embedded: 'always' },
             vendor: { embedded: 'always' },
             warranty: { embedded: 'always' },
             photo: { embedded: 'always' },

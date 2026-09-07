@@ -20,4 +20,27 @@ module('Unit | Model | trailer', function (hooks) {
         assert.strictEqual(trailer.payload_capacity, 20000);
         assert.deepEqual(trailer.coordinates, [47.9, 106.9]);
     });
+
+    test('it derives display, attachment, and connectivity projections', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const trailer = store.createRecord('trailer', {
+            public_id: 'trailer_one',
+            attachment_state: 'attached',
+            connectivity_status: 'recently_offline',
+            last_online_at: new Date('2026-09-01T10:30:00Z'),
+            attached_at: new Date('2026-08-30T08:00:00Z'),
+        });
+
+        assert.strictEqual(trailer.displayName, 'trailer_one', 'falls back to the public id when no name is set');
+        assert.true(trailer.isAttached);
+        assert.false(trailer.isOnline);
+        assert.ok(trailer.lastOnlineAt.startsWith('2026-09-01'));
+        assert.ok(trailer.attachedAt.startsWith('2026-08-30'));
+        assert.ok(trailer.lastOnlineAgo);
+
+        trailer.setProperties({ name: 'Reefer 12', connectivity_status: 'online', last_online_at: null });
+        assert.strictEqual(trailer.displayName, 'Reefer 12');
+        assert.true(trailer.isOnline);
+        assert.strictEqual(trailer.lastOnlineAt, null);
+    });
 });

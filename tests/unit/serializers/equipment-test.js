@@ -46,4 +46,18 @@ module('Unit | Serializer | equipment', function (hooks) {
 
         assert.strictEqual(json.equipable_type, 'fleet-ops:vehicle');
     });
+
+    test('it resolves equipment issued to a driver through the attachable-driver model', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serializer = store.serializerFor('equipment');
+        const normalized = serializer.normalize(store.modelFor('equipment'), {
+            uuid: 'equipment-2',
+            equipable_uuid: 'driver-1',
+            equipable_type: 'fleet-ops:driver',
+            equipable: { uuid: 'driver-1', public_id: 'driver_1', name: 'Dana Driver' },
+        });
+
+        assert.strictEqual(normalized.data.relationships.equipable.data.type, 'attachable-driver');
+        assert.ok(store.modelFor('attachable-driver'), 'the attachable-driver model exists for the store');
+    });
 });

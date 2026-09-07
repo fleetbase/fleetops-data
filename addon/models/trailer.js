@@ -3,6 +3,7 @@ import { attr, belongsTo, hasMany } from '@ember-data/model';
 import { computed, get } from '@ember/object';
 import { not } from '@ember/object/computed';
 import isValidCoordinates from '@fleetbase/ember-core/utils/is-valid-coordinates';
+import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
 
 /**
  * A first-class towed fleet asset.
@@ -47,6 +48,8 @@ export default class TrailerModel extends AssetModel {
 
     /** @current operational projections */
     @attr('boolean') online;
+    @attr('string') attachment_state;
+    @attr('string') vehicle_id;
     @attr('string') connectivity_status;
     @attr('string') movement_status;
     @attr('raw') telematics;
@@ -57,6 +60,42 @@ export default class TrailerModel extends AssetModel {
     @attr('number') devices_count;
     @attr('number') equipment_count;
     @attr('date') last_online_at;
+
+    @computed('display_name', 'name', 'yearMakeModel', 'code', 'public_id') get displayName() {
+        return this.display_name || this.name || this.yearMakeModel || this.code || this.public_id;
+    }
+
+    @computed('attachment_state') get isAttached() {
+        return this.attachment_state === 'attached';
+    }
+
+    @computed('connectivity_status', 'online') get isOnline() {
+        return this.connectivity_status === 'online' || this.online === true;
+    }
+
+    @computed('last_online_at') get lastOnlineAt() {
+        if (!isValidDate(this.last_online_at)) {
+            return null;
+        }
+
+        return formatDate(this.last_online_at, 'yyyy-MM-dd HH:mm');
+    }
+
+    @computed('last_online_at') get lastOnlineAgo() {
+        if (!isValidDate(this.last_online_at)) {
+            return null;
+        }
+
+        return formatDistanceToNow(this.last_online_at, { addSuffix: true });
+    }
+
+    @computed('attached_at') get attachedAt() {
+        if (!isValidDate(this.attached_at)) {
+            return null;
+        }
+
+        return formatDate(this.attached_at, 'yyyy-MM-dd HH:mm');
+    }
 
     @computed('name', 'display_name', 'code', 'plate_number', 'vin', 'serial_number', 'yearMakeModel') get searchString() {
         return [this.name, this.display_name, this.code, this.plate_number, this.vin, this.serial_number, this.yearMakeModel].filter(Boolean).join(' ');
