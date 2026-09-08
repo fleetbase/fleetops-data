@@ -54,10 +54,4 @@ module.exports = {
         statements: [44],
         branches: ['if@41#1'],
     },
-
-    'addon/serializers/entity.js': {
-        reason: 'The `!belongsTo` branch is dead because `belongsTo.modelName` is read three lines earlier, so a missing relationship throws before the guard is reached. See DEFECTS.md §11.',
-        statements: [45],
-        branches: ['if@44#0'],
-    },
 };

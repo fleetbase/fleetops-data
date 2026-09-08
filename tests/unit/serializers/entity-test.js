@@ -75,12 +75,11 @@ module('Unit | Serializer | entity', function (hooks) {
         assert.strictEqual(json.customer_type, 'fleet-ops:contact');
     });
 
-    test('an unset customer throws instead of clearing the type', function (assert) {
+    test('an unset customer clears the type rather than leaving it stale', function (assert) {
         const json = {};
 
-        // The serializer reads `belongsTo.modelName` before checking whether
-        // `belongsTo` exists, so its own null branch can never run. See DEFECTS.md.
-        assert.throws(() => this.serializer.serializePolymorphicType(snapshotStub({ belongsTo: null }), json, { key: 'customer' }), TypeError);
-        assert.deepEqual(json, {}, 'and nothing is written');
+        this.serializer.serializePolymorphicType(snapshotStub({ belongsTo: null }), json, { key: 'customer' });
+
+        assert.strictEqual(json.customer_type, null);
     });
 });

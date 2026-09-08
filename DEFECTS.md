@@ -183,33 +183,31 @@ Covered by `tests/unit/utils/is-relation-missing-test.js`,
 `tests/unit/utils/should-not-load-relation-test.js` and the loader tests in
 `tests/unit/models/{driver,fuel-report,issue}-test.js`.
 
-## Unreachable defensive code
-
-These are listed in `scripts/unreachable-code.js`, which the coverage gate reads.
-The gate counts them as covered **and fails if any of them becomes reachable**,
-so the list cannot outlive its cause. None of them is a behavioural bug today;
-each is a guard that can never fire.
-
-### 11. `EntitySerializer.serializePolymorphicType` reads before it checks
+### 11. `EntitySerializer.serializePolymorphicType` read before it checked
 
 ```js
 let belongsTo = snapshot.belongsTo(key);
-let type = belongsTo.modelName;   // ← throws here
+let type = belongsTo.modelName;   // ← threw here
 …
 if (!belongsTo) {
     json[key + '_type'] = null;   // ← never reached
 }
 ```
 
-`belongsTo.modelName` is read three lines before the null guard, so an unset
-`customer` throws a `TypeError` rather than clearing the type. Every sibling
-serializer (order, waypoint, maintenance, work-order) reads `modelName` inside
-the else branch and handles the null correctly.
+`belongsTo.modelName` was read three lines before the null guard, so an unset
+`customer` threw a `TypeError` rather than clearing the type. The read now
+happens inside the else branch, exactly as the order, waypoint, maintenance and
+work-order serializers already do, so an unset customer writes
+`customer_type: null`. The branch is live, so its coverage exemption is gone.
 
-Moving the read below the guard is a one-line fix, but it changes a throw into a
-`null`, which is a behaviour change for anything currently relying on the throw
-to surface a mis-built snapshot. `tests/unit/serializers/entity-test.js` asserts
-the throw.
+Covered by `tests/unit/serializers/entity-test.js`.
+
+## Unreachable defensive code
+
+These are listed in `scripts/unreachable-code.js`, which the coverage gate reads.
+The gate counts them as covered **and fails if any of them becomes reachable**,
+so the list cannot outlive its cause. None of them is a behavioural bug today;
+each is a guard that can never fire.
 
 ### 12. Two order loaders repeat a check that already returned
 
