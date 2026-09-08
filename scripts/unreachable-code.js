@@ -22,14 +22,6 @@
  * This list should shrink, never grow.
  */
 module.exports = {
-    'addon/models/payload.js': {
-        reason:
-            'orderWaypoints falls back to returning `this.waypoints` when the relationship has no `toArray`. ' +
-            'Ember Data rejects any attempt to unset a hasMany, so the relationship is always a ManyArray and the fallback cannot run. See DEFECTS.md §13.',
-        statements: [118],
-        branches: ['if@114#1'],
-    },
-
     'addon/models/service-rate.js': {
         reason:
             'Two shapes of dead defence. `rankFee` returns 2 for a fee that is neither new nor has an id, which Ember Data cannot produce — a record is either unsaved (no id) or loaded (has one). ' +

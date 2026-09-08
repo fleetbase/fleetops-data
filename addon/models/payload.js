@@ -109,13 +109,8 @@ export default class PayloadModel extends Model {
         return groups;
     }
 
-    // eslint-disable-next-line ember/use-brace-expansion
-    @computed('waypoints.[]', 'waypoints.toArray') get orderWaypoints() {
-        if (this.waypoints && typeof this.waypoints.toArray === 'function') {
-            return this.waypoints.toArray();
-        }
-
-        return this.waypoints;
+    @computed('waypoints.[]') get orderWaypoints() {
+        return this.waypoints.toArray();
     }
 
     // eslint-disable-next-line ember/use-brace-expansion

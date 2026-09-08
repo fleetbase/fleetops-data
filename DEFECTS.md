@@ -216,18 +216,21 @@ case that ever forced a refetch.
 
 Covered by `tests/unit/models/order-test.js`.
 
+### 13. `payload.orderWaypoints` guarded against an unsettable relationship
+
+The fallback returned `this.waypoints` when it had no `toArray`. Ember Data
+refuses `payload.set('waypoints', null)` with *"You must pass an array of records
+to set a hasMany relationship"*, so the relationship is always a ManyArray. The
+getter now returns `this.waypoints.toArray()` and nothing else.
+
+Covered by `tests/unit/models/payload-test.js`.
+
 ## Unreachable defensive code
 
 These are listed in `scripts/unreachable-code.js`, which the coverage gate reads.
 The gate counts them as covered **and fails if any of them becomes reachable**,
 so the list cannot outlive its cause. None of them is a behavioural bug today;
 each is a guard that can never fire.
-
-### 13. `payload.orderWaypoints` guards against an unsettable relationship
-
-The fallback returns `this.waypoints` when it has no `toArray`. Ember Data
-refuses `payload.set('waypoints', null)` with *"You must pass an array of records
-to set a hasMany relationship"*, so the relationship is always a ManyArray.
 
 ### 14. `service-rate` fee ranking and `?? []` fallbacks
 

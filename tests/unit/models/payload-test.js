@@ -398,20 +398,4 @@ module('Unit | Model | payload', function (hooks) {
             assertStandardDateGetters(assert, this.store.createRecord('payload'), 'updated_at', 'updated');
         });
     });
-
-    test('orderWaypoints hands back a plain array unchanged when it is not a live relationship', function (assert) {
-        const payload = this.store.createRecord('payload');
-        const plain = [this.store.createRecord('waypoint')];
-
-        payload.set('waypoints', plain);
-
-        assert.deepEqual(payload.orderWaypoints, plain, 'a plain array has no toArray to call, so it is returned as-is');
-    });
-
-    test('the waypoints relationship can never be absent, so orderWaypoints always materializes it', function (assert) {
-        const payload = this.store.createRecord('payload');
-
-        assert.throws(() => payload.set('waypoints', null), /array of records/, 'Ember Data refuses to unset a hasMany');
-        assert.true(Array.isArray(payload.orderWaypoints), 'so the fallback in orderWaypoints is unreachable — see DEFECTS.md');
-    });
 });
