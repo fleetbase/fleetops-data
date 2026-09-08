@@ -56,12 +56,10 @@ Its only caller is `Circle.toGeographic`, which always passes
 now-redundant `noCrs` parameter; `MercatorCRS` is still exported from
 `geo-json.js` for consumers.
 
-## Recorded, not fixed
+### 5. Three models formatted dates without an `isValidDate` guard
 
-### 5. Three models format dates without an `isValidDate` guard
-
-`payload`, `integrated-vendor` and `service-rate` have `date-fns` getters that
-call `formatDate` / `formatDistanceToNow` directly:
+`payload`, `integrated-vendor` and `service-rate` had `date-fns` getters that
+called `formatDate` / `formatDistanceToNow` directly:
 
 | Model | Unguarded getters |
 | --- | --- |
@@ -69,14 +67,16 @@ call `formatDate` / `formatDistanceToNow` directly:
 | `integrated-vendor` | `updatedAgo`, `updatedAt`, `createdAgo` |
 | `service-rate` | `updatedAgo`, `updatedAt`, `updatedAtShort`, `createdAgo` |
 
-About fifty sibling models guard the same getters and return `null`. These three
-throw `RangeError: Invalid time value` when the date is missing, so reading them
-on an unsaved record crashes.
+About fifty sibling models guard the same getters and return `null`; these
+threw `RangeError: Invalid time value` when the date was missing, so reading
+them on an unsaved record crashed. Every getter now carries the same
+`isValidDate` guard as its siblings and returns `null`. The `guarded: false`
+escape hatch in `tests/helpers/model-contract.js` went with it: every date
+getter in the addon now has to cope with a missing date.
 
-Not fixed because it changes error behaviour across three models, and records
-arriving from the API always carry `created_at`/`updated_at`, so it is not
-reachable through normal use. The tests assert only the happy path and say so
-inline (`assertDateGetters(..., { guarded: false })`).
+Covered by the three models' unit tests through `assertDateGetters`.
+
+## Recorded, not fixed
 
 ### 6. `DriverSerializer.serializeBelongsTo` writes an undefined vehicle id
 

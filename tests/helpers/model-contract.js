@@ -177,14 +177,8 @@ export function assertDefaults(assert, record, expected) {
  *                 `FIXED_DATE`
  * @param {Object} [distance] map of getter name to the expected string for
  *                 `threeDaysAgo()`
- * @param {Object} [options]
- * @param {Boolean} [options.guarded] whether the getters check `isValidDate`
- *                  before formatting. A handful of models omit that guard, and
- *                  their getters throw on a missing date rather than returning
- *                  null; passing `false` asserts only the happy path so the test
- *                  documents real behaviour instead of an aspiration.
  */
-export function assertDateGetters(assert, record, attribute, formatted, distance = {}, { guarded = true } = {}) {
+export function assertDateGetters(assert, record, attribute, formatted, distance = {}) {
     const label = record.constructor.modelName;
 
     record.set(attribute, FIXED_DATE);
@@ -195,10 +189,6 @@ export function assertDateGetters(assert, record, attribute, formatted, distance
     record.set(attribute, threeDaysAgo());
     for (const [getter, expected] of Object.entries(distance)) {
         assert.strictEqual(record[getter], expected, `${label}.${getter} describes the distance from ${attribute} to now`);
-    }
-
-    if (!guarded) {
-        return;
     }
 
     const names = [...Object.keys(formatted), ...Object.keys(distance)];

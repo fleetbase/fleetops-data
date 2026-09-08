@@ -335,10 +335,7 @@ module('Unit | Model | service rate', function (hooks) {
                 this.owner.lookup('service:store').createRecord('service-rate'),
                 'updated_at',
                 { updatedAt: FIXED_DATE_LONG, updatedAtShort: FIXED_DATE_SHORT },
-                { updatedAgo: THREE_DAYS_DISTANCE },
-                // No isValidDate guard here: a rate with no updated_at throws
-                // rather than rendering as null. See DEFECTS.md.
-                { guarded: false }
+                { updatedAgo: THREE_DAYS_DISTANCE }
             );
         });
 
@@ -348,16 +345,8 @@ module('Unit | Model | service rate', function (hooks) {
                 this.owner.lookup('service:store').createRecord('service-rate'),
                 'created_at',
                 { createdAt: FIXED_DATE_LONG, createdAtShort: FIXED_DATE_SHORT },
-                { createdAgo: THREE_DAYS_DISTANCE },
-                { guarded: false }
+                { createdAgo: THREE_DAYS_DISTANCE }
             );
-        });
-
-        test('createdAt and createdAtShort are null on an unsaved rate', function (assert) {
-            const serviceRate = this.owner.lookup('service:store').createRecord('service-rate');
-
-            assert.strictEqual(serviceRate.createdAt, null, 'the two guarded getters do cope with a missing date');
-            assert.strictEqual(serviceRate.createdAtShort, null);
         });
     });
 

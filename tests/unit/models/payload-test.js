@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupTest } from 'dummy/tests/helpers';
-import { FIXED_DATE, FIXED_DATE_LONG, FIXED_DATE_SHORT, THREE_DAYS_DISTANCE, assertAttributeTypes, assertRelationships, threeDaysAgo } from 'dummy/tests/helpers/model-contract';
+import { assertAttributeTypes, assertRelationships, assertStandardDateGetters } from 'dummy/tests/helpers/model-contract';
 
 module('Unit | Model | payload', function (hooks) {
     setupTest(hooks);
@@ -390,28 +390,12 @@ module('Unit | Model | payload', function (hooks) {
     });
 
     module('formatted dates', function () {
-        test('created_at renders long, short and relative forms', function (assert) {
-            const payload = this.store.createRecord('payload', { created_at: FIXED_DATE });
-
-            assert.strictEqual(payload.createdAt, FIXED_DATE_LONG);
-            assert.strictEqual(payload.createdAtShort, FIXED_DATE_SHORT);
-
-            payload.set('created_at', threeDaysAgo());
-            assert.strictEqual(payload.createdAgo, THREE_DAYS_DISTANCE);
+        test('created_at renders long, short and relative forms, and null when missing', function (assert) {
+            assertStandardDateGetters(assert, this.store.createRecord('payload'), 'created_at', 'created');
         });
 
-        test('createdAt is null when the payload has never been saved', function (assert) {
-            assert.strictEqual(this.store.createRecord('payload').createdAt, null);
-        });
-
-        test('updated_at renders long, short and relative forms', function (assert) {
-            const payload = this.store.createRecord('payload', { updated_at: FIXED_DATE });
-
-            assert.strictEqual(payload.updatedAt, FIXED_DATE_LONG);
-            assert.strictEqual(payload.updatedAtShort, FIXED_DATE_SHORT);
-
-            payload.set('updated_at', threeDaysAgo());
-            assert.strictEqual(payload.updatedAgo, THREE_DAYS_DISTANCE);
+        test('updated_at renders long, short and relative forms, and null when missing', function (assert) {
+            assertStandardDateGetters(assert, this.store.createRecord('payload'), 'updated_at', 'updated');
         });
     });
 

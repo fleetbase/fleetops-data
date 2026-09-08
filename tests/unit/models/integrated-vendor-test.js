@@ -25,10 +25,7 @@ module('Unit | Model | integrated vendor', function (hooks) {
             },
             {
                 updatedAgo: THREE_DAYS_DISTANCE,
-            },
-            // These getters have no isValidDate guard, so a missing date throws
-            // rather than rendering as null.
-            { guarded: false }
+            }
         );
     });
 
@@ -42,14 +39,7 @@ module('Unit | Model | integrated vendor', function (hooks) {
             },
             {
                 createdAgo: THREE_DAYS_DISTANCE,
-            },
-            // These getters have no isValidDate guard, so a missing date throws
-            // rather than rendering as null.
-            { guarded: false }
+            }
         );
-    });
-
-    test('createdAt is null for an integrated vendor that was never saved', function (assert) {
-        assert.strictEqual(this.store.createRecord('integrated-vendor').createdAt, null);
     });
 });

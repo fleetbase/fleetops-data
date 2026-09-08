@@ -166,18 +166,30 @@ export default class PayloadModel extends Model {
 
     /** computed dates */
     @computed('updated_at') get updatedAgo() {
+        if (!isValidDate(this.updated_at)) {
+            return null;
+        }
         return formatDistanceToNow(this.updated_at);
     }
 
     @computed('updated_at') get updatedAt() {
+        if (!isValidDate(this.updated_at)) {
+            return null;
+        }
         return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
+        if (!isValidDate(this.updated_at)) {
+            return null;
+        }
         return formatDate(this.updated_at, 'dd, MMM');
     }
 
     @computed('created_at') get createdAgo() {
+        if (!isValidDate(this.created_at)) {
+            return null;
+        }
         return formatDistanceToNow(this.created_at);
     }
 
@@ -189,6 +201,9 @@ export default class PayloadModel extends Model {
     }
 
     @computed('created_at') get createdAtShort() {
+        if (!isValidDate(this.created_at)) {
+            return null;
+        }
         return formatDate(this.created_at, 'dd, MMM');
     }
 

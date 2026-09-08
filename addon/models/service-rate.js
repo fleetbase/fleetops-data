@@ -1,7 +1,7 @@
 import Model, { attr, hasMany, belongsTo } from '@ember-data/model';
 import { computed, action } from '@ember/object';
 import { getOwner } from '@ember/application';
-import { format as formatDate, formatDistanceToNow } from 'date-fns';
+import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
 
 export default class ServiceRate extends Model {
     /** @ids */
@@ -53,27 +53,45 @@ export default class ServiceRate extends Model {
 
     /** @computed */
     @computed('updated_at') get updatedAgo() {
+        if (!isValidDate(this.updated_at)) {
+            return null;
+        }
         return formatDistanceToNow(this.updated_at);
     }
 
     @computed('updated_at') get updatedAt() {
+        if (!isValidDate(this.updated_at)) {
+            return null;
+        }
         return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('updated_at') get updatedAtShort() {
+        if (!isValidDate(this.updated_at)) {
+            return null;
+        }
         return formatDate(this.updated_at, 'dd, MMM');
     }
 
     @computed('created_at') get createdAgo() {
+        if (!isValidDate(this.created_at)) {
+            return null;
+        }
         return formatDistanceToNow(this.created_at);
     }
 
     @computed('created_at') get createdAt() {
-        return this.created_at ? formatDate(this.created_at, 'yyyy-MM-dd HH:mm') : null;
+        if (!isValidDate(this.created_at)) {
+            return null;
+        }
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
     @computed('created_at') get createdAtShort() {
-        return this.created_at ? formatDate(this.created_at, 'dd, MMM') : null;
+        if (!isValidDate(this.created_at)) {
+            return null;
+        }
+        return formatDate(this.created_at, 'dd, MMM');
     }
 
     @computed('rate_calculation_method') get isFixedMeter() {
