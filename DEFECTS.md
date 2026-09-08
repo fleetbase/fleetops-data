@@ -76,9 +76,7 @@ getter in the addon now has to cope with a missing date.
 
 Covered by the three models' unit tests through `assertDateGetters`.
 
-## Recorded, not fixed
-
-### 6. `DriverSerializer.serializeBelongsTo` writes an undefined vehicle id
+### 6. `DriverSerializer.serializeBelongsTo` wrote an undefined vehicle id
 
 ```js
 if (key === 'vehicle' && isArray(json[key])) {
@@ -87,14 +85,21 @@ if (key === 'vehicle' && isArray(json[key])) {
 }
 ```
 
-`get(array, 'uuid')` is `undefined` for an array, so this defensive path writes
-`vehicle_uuid: undefined` rather than an identifier. It also cannot trigger
-during a normal `record.serialize()`, because `json.vehicle` is still unset when
-`serializeBelongsTo` runs — the embedded mixin populates it afterwards.
+`get(array, 'uuid')` is `undefined` for an array, so this defensive path wrote
+`vehicle_uuid: undefined` rather than an identifier. It also could not trigger
+during a normal `record.serialize()`: `json.vehicle` is still unset when
+`serializeBelongsTo` runs, because the embedded mixin populates it afterwards,
+and nothing in the monorepo calls the hook directly.
 
-`tests/unit/serializers/driver-test.js` calls the hook directly and asserts what
-it actually does. If the intent was to pick the first element's uuid, the fix is
-a one-line change, but nothing in the repository establishes that intent.
+The branch was deleted rather than repaired. Correcting the type test to
+`isObject` would have left it just as unreachable, and nothing establishes
+that an array-shaped `vehicle` was ever meant to be reduced to its first
+element's uuid. The vehicle relationship is now always handed to the embedded
+records mixin, which is what every real serialization did already.
+
+Covered by `tests/unit/serializers/driver-test.js`.
+
+## Recorded, not fixed
 
 ### 7. `isRelationMissing` (upstream, `@fleetbase/ember-core`) ignores the relation
 

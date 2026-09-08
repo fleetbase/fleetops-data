@@ -81,18 +81,6 @@ module('Unit | Serializer | driver', function (hooks) {
         assert.strictEqual(json.vehicle.name, 'Van 1', 'the assigned vehicle travels inline');
     });
 
-    test('a vehicle already present as an array is reduced to an identifier instead of being embedded', function (assert) {
-        // Defensive legacy path: when the payload under construction already
-        // carries `vehicle` as a collection, the serializer refuses to embed and
-        // writes an identifier key instead.
-        const json = { vehicle: [{ uuid: 'veh_1', name: 'Van 1' }] };
-
-        this.serializer.serializeBelongsTo(null, json, { key: 'vehicle' });
-
-        assert.deepEqual(json.vehicle, [{ uuid: 'veh_1', name: 'Van 1' }], 'the collection is left untouched');
-        assert.true('vehicle_uuid' in json, 'and an identifier key is written in its place');
-    });
-
     test('a hasMany that is not on the skip list is still serialized', function (assert) {
         const driver = this.store.createRecord('driver');
         driver.custom_field_values.pushObject(this.store.createRecord('custom-field-value', { name: 'Shift' }));
