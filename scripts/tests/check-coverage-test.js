@@ -6,7 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { after, before, describe, it } = require('node:test');
 
-const { evaluateCoverage, findEligibleFiles, normalizeCoverageKey, readJson, run } = require('../check-coverage');
+const { confirmNoStatements, evaluateCoverage, findEligibleFiles, normalizeCoverageKey, readJson, run } = require('../check-coverage');
 
 const PACKAGE_NAME = '@fleetbase/fleetops-data';
 
@@ -31,6 +31,24 @@ function makeProject(sourceFiles) {
     }
 
     return root;
+}
+
+/**
+ * Write a source file with specific contents into a throwaway project.
+ *
+ * @param {String} root
+ * @param {String} file project-relative path
+ * @param {String} source
+ */
+function writeSource(root, file, source) {
+    const absolute = path.join(root, file);
+    fs.mkdirSync(path.dirname(absolute), { recursive: true });
+    fs.writeFileSync(absolute, source);
+}
+
+/** An Istanbul metrics bundle for a file that instruments to nothing at all. */
+function emptyMetrics() {
+    return fullMetrics({ statements: [0, 0], branches: [0, 0], functions: [0, 0], lines: [0, 0] });
 }
 
 /**
@@ -515,5 +533,185 @@ describe('the documented-unreachable allowlist', function () {
 
         assert.equal(code, 1);
         assert.match(output, /is not in the coverage report/);
+    });
+});
+
+describe('files the report shows with no statements', function () {
+    const DECLARATION_ONLY =
+        "import CustomerModel from './customer';\nimport { attr } from '@ember-data/model';\n\nexport default class CustomerContactModel extends CustomerModel {\n    /** @ids */\n    @attr('string') public_id;\n    @attr('date') created_at;\n}\n";
+    const BARE_SUBCLASS = "import ContactSerializer from './contact';\n\nexport default class CustomerSerializer extends ContactSerializer {}\n";
+    const BARREL = "export { default as Point } from './geojson/point';\nexport { default as Polygon } from './geojson/polygon';\n";
+    const EXECUTABLE = 'export default function total(a, b) {\n    return a + b;\n}\n';
+
+    it('confirms a decorated-fields model, a bare subclass and a re-export barrel have nothing to cover', function () {
+        const root = makeProject([]);
+        writeSource(root, 'addon/models/customer-contact.js', DECLARATION_ONLY);
+        writeSource(root, 'addon/serializers/customer.js', BARE_SUBCLASS);
+        writeSource(root, 'addon/utils/geojson.js', BARREL);
+
+        for (const file of ['addon/models/customer-contact.js', 'addon/serializers/customer.js', 'addon/utils/geojson.js']) {
+            assert.deepEqual(confirmNoStatements(path.join(root, file)), { ok: true }, `${file} is declaration-only`);
+        }
+    });
+
+    it('rejects source that has statements, a class field with a value, or an expression-bodied arrow', function () {
+        const root = makeProject([]);
+        writeSource(root, 'addon/a.js', EXECUTABLE);
+        writeSource(root, 'addon/b.js', "export default class ManifestSerializer {\n    attrs = { driver: { embedded: 'always' } };\n}\n");
+        writeSource(root, 'addon/c.js', 'export const double = (n) => n * 2;\n');
+        writeSource(root, 'addon/d.js', "export default class Model {\n    @computed('x', () => 1) y;\n}\n");
+
+        for (const file of ['addon/a.js', 'addon/b.js', 'addon/c.js', 'addon/d.js']) {
+            const result = confirmNoStatements(path.join(root, file));
+            assert.equal(result.ok, false, `${file} has executable code`);
+            assert.match(result.error, /never instrumented/);
+        }
+    });
+
+    it('does not mistake an uninitialised variable or an empty method body for a statement', function () {
+        const root = makeProject([]);
+        writeSource(root, 'addon/e.js', 'let pending;\nexport default class Base {\n    setup() {}\n}\n');
+
+        assert.deepEqual(confirmNoStatements(path.join(root, 'addon/e.js')), { ok: true });
+    });
+
+    it('reports source that cannot be parsed or read', function () {
+        const root = makeProject([]);
+        writeSource(root, 'addon/broken.js', 'export default {\n');
+
+        assert.match(confirmNoStatements(path.join(root, 'addon/broken.js')).error, /could not be parsed/);
+        assert.match(confirmNoStatements(path.join(root, 'addon/absent.js')).error, /could not be read/);
+    });
+
+    it('accepts a zero-statement file once its source is confirmed, and reports it as declaration-only', function () {
+        const root = makeProject(['addon/models/order.js']);
+        writeSource(root, 'addon/models/customer-contact.js', DECLARATION_ONLY);
+
+        const result = evaluateCoverage({
+            projectRoot: root,
+            packageName: PACKAGE_NAME,
+            eligibleFiles: ['addon/models/customer-contact.js', 'addon/models/order.js'],
+            summary: {
+                total: fullMetrics(),
+                'addon/models/customer-contact.js': emptyMetrics(),
+                'addon/models/order.js': fullMetrics(),
+            },
+        });
+
+        assert.deepEqual(result.failures, []);
+        assert.equal(result.ok, true);
+        assert.deepEqual(result.declarationOnly, ['addon/models/customer-contact.js']);
+    });
+
+    it('fails a zero-statement file whose source has executable code, instead of treating it as vacuously covered', function () {
+        const root = makeProject([]);
+        writeSource(root, 'addon/utils/total.js', EXECUTABLE);
+
+        const result = evaluateCoverage({
+            projectRoot: root,
+            packageName: PACKAGE_NAME,
+            eligibleFiles: ['addon/utils/total.js'],
+            summary: { total: fullMetrics(), 'addon/utils/total.js': emptyMetrics() },
+        });
+
+        assert.equal(result.ok, false);
+        assert.equal(result.failures.length, 1);
+        assert.match(result.failures[0], /addon\/utils\/total\.js has executable code but the coverage report records no statements/);
+        assert.deepEqual(result.declarationOnly, []);
+    });
+
+    it('still skips a file that merely has no branches or functions to cover', function () {
+        const result = evaluateCoverage({
+            projectRoot: '/repo',
+            packageName: PACKAGE_NAME,
+            eligibleFiles: ['addon/utils/constants.js'],
+            summary: {
+                total: fullMetrics(),
+                'addon/utils/constants.js': fullMetrics({ statements: [2, 2], branches: [0, 0], functions: [0, 0], lines: [2, 2] }),
+            },
+        });
+
+        assert.deepEqual(result.failures, [], 'the source is not consulted when there are statements to check');
+        assert.equal(result.ok, true);
+    });
+
+    it('the gate lists declaration-only files in its output', function () {
+        const root = makeProject(['addon/models/order.js']);
+        writeSource(root, 'addon/serializers/customer.js', BARE_SUBCLASS);
+        writeReport(root, {
+            total: fullMetrics(),
+            'addon/models/order.js': fullMetrics(),
+            'addon/serializers/customer.js': emptyMetrics(),
+        });
+
+        const { code, output } = runGate(root);
+
+        assert.equal(code, 0);
+        assert.match(output, /Declaration-only files \(no statements to cover, confirmed against their source\): 1\n {2}addon\/serializers\/customer\.js/);
+    });
+
+    it('the gate fails when an empty report entry stands in for real code', function () {
+        const root = makeProject(['addon/models/order.js']);
+        writeSource(root, 'addon/utils/total.js', EXECUTABLE);
+        writeReport(root, {
+            total: fullMetrics(),
+            'addon/models/order.js': fullMetrics(),
+            'addon/utils/total.js': emptyMetrics(),
+        });
+
+        const { code, output } = runGate(root);
+
+        assert.equal(code, 1);
+        assert.match(output, /addon\/utils\/total\.js has executable code/);
+    });
+});
+
+describe('report entries that collapse onto one addon file', function () {
+    it('fails loudly when a dummy-app fixture shadows an addon module', function () {
+        const result = evaluateCoverage({
+            projectRoot: '/repo',
+            packageName: PACKAGE_NAME,
+            eligibleFiles: ['addon/models/trailer.js'],
+            summary: {
+                total: fullMetrics(),
+                'addon/models/trailer.js': fullMetrics({ statements: [1, 2] }),
+                'dummy/models/trailer.js': fullMetrics(),
+            },
+        });
+
+        assert.equal(result.ok, false);
+        const joined = result.failures.join('\n');
+        assert.match(joined, /addon\/models\/trailer\.js appears twice in the coverage report, as `addon\/models\/trailer\.js` and `dummy\/models\/trailer\.js`/);
+        assert.match(joined, /addon\/models\/trailer\.js statements 50\.00% \(1\/2\)/, 'the real module is still the one that is checked');
+    });
+
+    it('fails even when the fixture is the entry the report lists first', function () {
+        const result = evaluateCoverage({
+            projectRoot: '/repo',
+            packageName: PACKAGE_NAME,
+            eligibleFiles: ['addon/models/trailer.js'],
+            summary: {
+                total: fullMetrics(),
+                'dummy/models/trailer.js': fullMetrics(),
+                'addon/models/trailer.js': fullMetrics({ statements: [1, 2] }),
+            },
+        });
+
+        assert.equal(result.ok, false, 'the trivially complete fixture cannot mask the shortfall');
+        assert.match(result.failures.join('\n'), /appears twice in the coverage report/);
+    });
+
+    it('the gate exits 1 on a collision', function () {
+        const root = makeProject(['addon/models/trailer.js']);
+        writeReport(root, {
+            total: fullMetrics(),
+            'addon/models/trailer.js': fullMetrics(),
+            'dummy/models/trailer.js': fullMetrics(),
+        });
+
+        const { code, output } = runGate(root);
+
+        assert.equal(code, 1);
+        assert.match(output, /a dummy-app fixture is shadowing an addon module/);
     });
 });

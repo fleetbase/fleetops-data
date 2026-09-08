@@ -8,7 +8,9 @@
  * the eligible file list from disk rather than from the report, so a file that
  * never gets instrumented (because nothing imported it, or because its module
  * failed to load) is reported as a failure instead of silently vanishing from
- * the denominator.
+ * the denominator. A file the report shows with no statements at all is only
+ * accepted once its source has been parsed and confirmed to have none, so an
+ * empty entry cannot stand in for a module that was never instrumented.
  *
  * Exit codes:
  *   0 - every eligible file is present and every metric is at the threshold
@@ -17,6 +19,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const babel = require('@babel/core');
 const UNREACHABLE = require('./unreachable-code');
 
 const METRICS = ['statements', 'branches', 'functions', 'lines'];
@@ -75,6 +78,116 @@ function collectJsFiles(dir, projectRoot) {
  */
 function toPosix(filePath) {
     return filePath.split(path.sep).join('/');
+}
+
+/**
+ * Parser options matching the addon's own Babel configuration, so the source
+ * check below understands every construct the coverage instrumenter did.
+ */
+const PARSER_OPTIONS = {
+    sourceType: 'module',
+    plugins: [['decorators', { decoratorsBeforeExport: true }]],
+};
+
+/** AST properties that never hold child nodes. */
+const NON_NODE_KEYS = new Set(['loc', 'start', 'end', 'range', 'extra', 'comments', 'leadingComments', 'trailingComments', 'innerComments']);
+
+/**
+ * Whether Istanbul would record a statement for this node.
+ *
+ * Mirrors istanbul-lib-instrument: every statement-typed node except blocks and
+ * empties, a variable declarator with an initializer, a class field with a
+ * value, and an arrow function whose body is an expression (which the
+ * instrumenter rewrites into a return statement).
+ *
+ * @param {Object} node
+ * @return {Boolean}
+ */
+function isCountedStatement(node) {
+    const { type } = node;
+
+    if (type.endsWith('Statement')) {
+        return type !== 'BlockStatement' && type !== 'EmptyStatement';
+    }
+
+    if (type === 'VariableDeclarator') {
+        return Boolean(node.init);
+    }
+
+    if (type === 'ClassProperty' || type === 'ClassPrivateProperty') {
+        return Boolean(node.value);
+    }
+
+    if (type === 'ArrowFunctionExpression') {
+        return node.body.type !== 'BlockStatement';
+    }
+
+    return false;
+}
+
+/**
+ * Depth-first search for a node matching `predicate`.
+ *
+ * @param {Object} node
+ * @param {Function} predicate
+ * @return {Boolean}
+ */
+function containsNode(node, predicate) {
+    if (predicate(node)) {
+        return true;
+    }
+
+    for (const [key, value] of Object.entries(node)) {
+        if (NON_NODE_KEYS.has(key)) {
+            continue;
+        }
+
+        const children = Array.isArray(value) ? value : [value];
+
+        for (const child of children) {
+            if (child && typeof child === 'object' && typeof child.type === 'string' && containsNode(child, predicate)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Confirm that a source file the report shows with zero statements genuinely
+ * has none to cover.
+ *
+ * Declaration-only modules — a bare subclass, a class holding nothing but
+ * decorated fields, a re-export barrel — legitimately instrument to zero
+ * statements. A file with executable code and zero statements was never
+ * instrumented, and must not pass on the strength of an empty report.
+ *
+ * @param {String} filePath absolute path to the source file
+ * @return {{ ok: Boolean, error?: String }}
+ */
+function confirmNoStatements(filePath) {
+    let source;
+
+    try {
+        source = fs.readFileSync(filePath, 'utf8');
+    } catch (error) {
+        return { ok: false, error: `could not be read to confirm it has no statements: ${error.message}` };
+    }
+
+    let ast;
+
+    try {
+        ast = babel.parseSync(source, { configFile: false, babelrc: false, parserOpts: PARSER_OPTIONS });
+    } catch (error) {
+        return { ok: false, error: `could not be parsed to confirm it has no statements: ${error.message}` };
+    }
+
+    if (containsNode(ast.program, isCountedStatement)) {
+        return { ok: false, error: 'has executable code but the coverage report records no statements for it — the file was never instrumented.' };
+    }
+
+    return { ok: true };
 }
 
 /**
@@ -311,7 +424,7 @@ function buildUncoveredIndex(finalReport, options) {
  * @param {String} options.projectRoot
  * @param {String} [options.packageName]
  * @param {Map<String, String[]>} [options.uncovered]
- * @return {{ ok: Boolean, failures: String[], totals: Object, checkedFiles: String[] }}
+ * @return {{ ok: Boolean, failures: String[], totals: Object, checkedFiles: String[], declarationOnly: String[] }}
  */
 function evaluateCoverage({ summary, eligibleFiles, thresholds = DEFAULT_THRESHOLDS, projectRoot, packageName, uncovered = new Map(), allowances = new Map() }) {
     const failures = [];
@@ -323,21 +436,36 @@ function evaluateCoverage({ summary, eligibleFiles, thresholds = DEFAULT_THRESHO
     const globalAllowance = (metric) => eligibleFiles.reduce((total, file) => total + ((allowances.get(file) || {})[metric] || 0), 0);
 
     if (!summary || typeof summary !== 'object') {
-        return { ok: false, failures: ['Coverage summary is not an object.'], totals: null, checkedFiles: [] };
+        return { ok: false, failures: ['Coverage summary is not an object.'], totals: null, checkedFiles: [], declarationOnly: [] };
     }
 
     if (!summary.total || typeof summary.total !== 'object') {
-        return { ok: false, failures: ['Coverage summary has no `total` section; the report is incomplete.'], totals: null, checkedFiles: [] };
+        return { ok: false, failures: ['Coverage summary has no `total` section; the report is incomplete.'], totals: null, checkedFiles: [], declarationOnly: [] };
     }
 
     const normalizeOptions = { projectRoot, packageName };
     const byFile = new Map();
+    const reportKeys = new Map();
 
     for (const [key, entry] of Object.entries(summary)) {
         if (key === 'total') {
             continue;
         }
-        byFile.set(normalizeCoverageKey(key, normalizeOptions), entry);
+
+        const file = normalizeCoverageKey(key, normalizeOptions);
+
+        // Two report entries collapsing onto one file means a dummy-app fixture
+        // is shadowing an addon module. Keep the first and fail loudly rather
+        // than let either one silently stand in for the other.
+        if (byFile.has(file)) {
+            failures.push(
+                `${file} appears twice in the coverage report, as \`${reportKeys.get(file)}\` and \`${key}\` — a dummy-app fixture is shadowing an addon module; rename one of them.`
+            );
+            continue;
+        }
+
+        byFile.set(file, entry);
+        reportKeys.set(file, key);
     }
 
     // 1. Every eligible file must appear in the report.
@@ -372,11 +500,26 @@ function evaluateCoverage({ summary, eligibleFiles, thresholds = DEFAULT_THRESHO
     }
 
     // 3. Per-file thresholds.
+    const declarationOnly = [];
+
     for (const file of eligibleFiles) {
         const entry = byFile.get(file);
 
         if (!entry) {
             continue; // already reported as missing
+        }
+
+        // A file the report shows with no statements at all is only acceptable
+        // when its source genuinely has none; otherwise it was never
+        // instrumented and an empty entry is standing in for real code.
+        if (entry.statements && entry.statements.total === 0) {
+            const confirmation = confirmNoStatements(path.join(projectRoot, file));
+
+            if (confirmation.ok) {
+                declarationOnly.push(file);
+            } else {
+                failures.push(`${file} ${confirmation.error}`);
+            }
         }
 
         for (const metric of METRICS) {
@@ -388,7 +531,10 @@ function evaluateCoverage({ summary, eligibleFiles, thresholds = DEFAULT_THRESHO
             }
 
             if (totals.total === 0) {
-                continue; // a file with no branches legitimately has none to cover
+                // Nothing to cover: a file can legitimately declare no branches or
+                // functions, and a zero-statement file was checked against its
+                // source above.
+                continue;
             }
 
             const allowed = (allowances.get(file) || {})[metric] || 0;
@@ -407,6 +553,7 @@ function evaluateCoverage({ summary, eligibleFiles, thresholds = DEFAULT_THRESHO
         failures,
         totals: summary.total,
         checkedFiles: eligibleFiles,
+        declarationOnly,
     };
 }
 
@@ -516,6 +663,13 @@ function run({
 
     log(`Eligible source files: ${eligibleFiles.length}`);
 
+    if (result.declarationOnly.length > 0) {
+        log(`Declaration-only files (no statements to cover, confirmed against their source): ${result.declarationOnly.length}`);
+        for (const file of result.declarationOnly) {
+            log(`  ${file}`);
+        }
+    }
+
     const exempted = Object.entries(unreachable);
     if (exempted.length > 0) {
         log('');
@@ -550,6 +704,7 @@ module.exports = {
     DEFAULT_SOURCE_ROOTS,
     UNREACHABLE,
     buildUncoveredIndex,
+    confirmNoStatements,
     evaluateCoverage,
     reconcileUnreachable,
     uncoveredLocations,
