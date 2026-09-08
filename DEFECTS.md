@@ -119,6 +119,15 @@ Fleetbase monorepo reads any of them, so nothing had adapted to the old values.
 
 Covered by `tests/unit/models/order-test.js`.
 
+### 9. `app/utils/geojson.js` re-exported a default that does not exist
+
+The app-tree shim was `export { default } from '@fleetbase/fleetops-data/utils/geojson'`,
+but the barrel declares only named exports, so the re-exported `default` was
+`undefined`. Nothing resolved the barrel through the app tree, so the shim was
+made to match the module it points at (`export * from …`) rather than deleted:
+every other addon module keeps its app-tree shim, and this one now behaves
+like them.
+
 ## Recorded, not fixed
 
 ### 7. `isRelationMissing` (upstream, `@fleetbase/ember-core`) ignores the relation
@@ -136,13 +145,6 @@ in hand.
 This lives in `@fleetbase/ember-core`, not this package. The Fleet-Ops tests pin
 the resulting behaviour so a fix upstream shows up here as a failing
 expectation rather than silently changing request volume.
-
-### 9. `app/utils/geojson.js` re-exports a default that does not exist
-
-The app-tree shim is `export { default } from '@fleetbase/fleetops-data/utils/geojson'`,
-but the barrel declares only named exports. The re-exported `default` is
-therefore `undefined`. Harmless in practice — consumers import the named
-exports — but the shim does not match the module it points at.
 
 ### 10. `ServiceRateSerializer` cannot deduplicate per-drop or distance fee drafts
 
