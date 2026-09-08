@@ -1,10 +1,10 @@
 # Defects and observations
 
 Findings surfaced while bringing `@fleetbase/fleetops-data` to 100% test
-coverage. Each entry says whether it was fixed in that campaign or only
-recorded, and — where it was only recorded — the test that pins the current
-behaviour so a future fix is a deliberate, visible change rather than a
-surprise.
+coverage, and the follow-up that closed every one of them. Each entry records
+what was wrong, what changed, and the test that covers the corrected
+behaviour. Nothing is exempted from the coverage gate any more; the end of this
+document describes how an exemption would be enforced if one were ever needed.
 
 ## Fixed
 
@@ -246,6 +246,54 @@ that deleted the method from the owning prototype to reach the guard went with
 it.
 
 Covered by `tests/unit/serializers/device-test.js`.
+
+## Coverage gate and CI
+
+Problems in the coverage infrastructure and the workflow, found in review and
+fixed alongside the defects above.
+
+### 16. The gate accepted an all-zero report entry as fully covered
+
+`scripts/check-coverage.js` skipped every metric whose total was zero. The
+comment justified that for branches, but the skip ran for statements too, so a
+file present in the report with nothing instrumented passed silently. Zero
+branches or functions are still skipped, because a file can legitimately
+declare none. A file with zero statements is now parsed and must genuinely have
+none — a bare subclass, a class of decorated fields, a re-export barrel. The
+addon has 27 such declaration-only modules, and the gate lists them on every
+run; anything with executable code and no statements fails.
+
+Covered by `scripts/tests/check-coverage-test.js`.
+
+### 17. A dummy-app fixture could shadow an addon module in the report
+
+The `dummy/` → `addon/` key rewrite overwrote an existing entry on collision,
+so a fixture under `tests/dummy/app/models/` with the same name as an addon
+module would substitute its trivially complete coverage for the real file's.
+No fixture collides today. A collision now fails the gate and names both keys.
+
+Covered by `scripts/tests/check-coverage-test.js`.
+
+### 18. The workflow did not run on release branches
+
+`pull_request.branches` filters on the base branch, and both triggers listed
+only `main`, so a pull request retargeted at `release/v0.2.0` ran nothing and
+a push to the release branch triggered nothing. Both triggers now include
+`release/**`.
+
+### 19. A Codecov upload failure could fail a passing build
+
+`fail_ci_if_error: true` turned a rate-limited or failed tokenless upload from a
+forked pull request into a failed `test` job even though lint, tests, the gate
+and the build had all passed. The upload is reporting; the gate is enforcement.
+It is now `false`.
+
+### 20. `test:ci` duplicated the workflow's steps
+
+`package.json` defined a `test:ci` script chaining the five CI steps that the
+workflow already ran individually, so two definitions of "what CI runs" could
+drift unnoticed. The script is deleted; the workflow keeps its separate steps
+for log granularity.
 
 ---
 
