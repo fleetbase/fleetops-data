@@ -236,36 +236,37 @@ no `toArray`, which never happens; they are plain `toArray()` calls now.
 
 Covered by `tests/unit/models/service-rate-test.js`.
 
-## Unreachable defensive code
+### 15. `DeviceSerializer` guarded against a missing inherited hook
 
-These are listed in `scripts/unreachable-code.js`, which the coverage gate reads.
-The gate counts them as covered **and fails if any of them becomes reachable**,
-so the list cannot outlive its cause. None of them is a behavioural bug today;
-each is a guard that can never fire.
+`if (typeof super.serializePolymorphicType === 'function')` could never be
+false: `super` resolves lexically against the class prototype chain, and
+`JSONSerializer` always provides the method, so the `return;` below it could
+not run. The guard is gone and the inherited hook is called directly. The test
+that deleted the method from the owning prototype to reach the guard went with
+it.
 
-### 15. `DeviceSerializer` guards against a missing inherited hook
-
-`if (typeof super.serializePolymorphicType === 'function')` — `super` resolves
-lexically against the class prototype chain, and `JSONSerializer` always provides
-the method, so the `return;` below it cannot run. The test deletes the method
-from the prototype that owns it to prove the branch behaves as intended, but
-Istanbul attributes that execution elsewhere.
+Covered by `tests/unit/serializers/device-test.js`.
 
 ---
 
-## How the exemptions are enforced
+## How coverage exemptions are enforced
 
-`scripts/unreachable-code.js` lists each unreachable location by its exact
-Istanbul identity. `pnpm run coverage:check` reads that list and:
+`scripts/unreachable-code.js` is the one place code can be exempted from the
+coverage gate, and it is empty: every clause that was once listed there was
+either made reachable by reordering (§11) or deleted outright (§12–§15). The
+mechanism stays so that a future guard which is provably unreachable *and*
+cannot be deleted has a documented home. `pnpm run coverage:check` reads the
+list and:
 
 - counts those specific locations as covered, so the gate can demand 100%;
-- **fails** if a listed location turns out to be covered, so a fix upstream
-  forces the exemption to be removed;
+- **fails** if a listed location turns out to be covered, so a fix forces the
+  exemption to be removed;
 - **fails** if a listed file is missing from the report entirely;
 - prints every exemption with its reason on each run, so none of them is silent.
 
-The exemptions are per-location, never per-file and never per-directory. Nothing
-else in the addon is excluded from coverage.
+Exemptions are per-location, never per-file and never per-directory. Nothing
+else in the addon is excluded from coverage, and every entry must have a
+matching section in this document explaining why the code could not be removed.
 
 ---
 

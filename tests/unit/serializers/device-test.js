@@ -137,29 +137,6 @@ module('Unit | Serializer | device', function (hooks) {
             assert.strictEqual(json.telematic_type, 'telematic', 'the inherited implementation types it, without the fleet-ops prefix this serializer adds for attachables');
         });
 
-        test('a non-attachable relationship is a no-op when the parent has no implementation', function (assert) {
-            // `super` is resolved lexically against the class's prototype chain,
-            // so the inherited implementation has to be removed from whichever
-            // prototype actually owns it.
-            let owner = Object.getPrototypeOf(Object.getPrototypeOf(this.serializer));
-            while (owner && !Object.prototype.hasOwnProperty.call(owner, 'serializePolymorphicType')) {
-                owner = Object.getPrototypeOf(owner);
-            }
-
-            const parent = owner;
-            const inherited = parent.serializePolymorphicType;
-            const json = {};
-
-            delete parent.serializePolymorphicType;
-
-            try {
-                assert.strictEqual(this.serializer.serializePolymorphicType(snapshotStub({}), json, { key: 'telematic' }), undefined);
-                assert.deepEqual(json, {}, 'nothing is written when there is nothing to delegate to');
-            } finally {
-                parent.serializePolymorphicType = inherited;
-            }
-        });
-
         test('the attachable type is derived from the related record, without the local prefix', function (assert) {
             for (const [modelName, expected] of Object.entries({ 'attachable-vehicle': 'vehicle', 'attachable-asset': 'asset', vehicle: 'vehicle' })) {
                 const json = {};

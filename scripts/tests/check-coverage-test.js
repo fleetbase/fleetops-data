@@ -326,6 +326,7 @@ describe('run', function () {
 
         assert.equal(code, 0);
         assert.match(output, /Coverage gate passed: 1 files at 100%/);
+        assert.doesNotMatch(output, /Documented unreachable code/, 'an empty exemption map prints no exemption block');
     });
 
     it('exits 1 when the report is absent', function () {
@@ -427,6 +428,9 @@ describe('reconcileUnreachable', function () {
     });
 
     it('the shipped exemption list is empty or fully documented', function () {
+        assert.equal(typeof UNREACHABLE, 'object');
+        assert.ok(UNREACHABLE !== null);
+
         for (const [file, entry] of Object.entries(UNREACHABLE)) {
             assert.equal(typeof entry.reason, 'string', `${file} has a written reason`);
             assert.ok(entry.reason.length > 20, `${file}'s reason is substantive`);
