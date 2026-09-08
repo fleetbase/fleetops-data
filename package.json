@@ -35,7 +35,6 @@
         "test:coverage-gate": "node --test scripts/tests/check-coverage-test.js",
         "coverage": "cross-env COVERAGE=true ember test",
         "coverage:check": "node scripts/check-coverage.js",
-        "test:ci": "pnpm run lint && pnpm run test:coverage-gate && pnpm run coverage && pnpm run coverage:check && pnpm run build",
         "publish:npm": "npm config set registry https://registry.npmjs.org/ && npm publish",
         "publish:github": "npm config set '@fleetbase:registry' https://npm.pkg.github.com/ && npm publish"
     },

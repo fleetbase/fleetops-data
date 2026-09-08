@@ -2,11 +2,11 @@ name: Ember CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'release/**']
     tags:
       - 'v*'
   pull_request:
-    branches: [main]
+    branches: [main, 'release/**']
 
 # Least privilege by default; the publishing jobs opt into what they need.
 permissions:
@@ -54,14 +54,16 @@ jobs:
         run: pnpm run coverage
 
       # Uploaded before the gate so a shortfall is still visible on the pull
-      # request rather than being hidden behind a failed step.
+      # request rather than being hidden behind a failed step. The upload is
+      # reporting, not enforcement: the gate below is what proves coverage, so
+      # a Codecov outage or rate limit must not fail a build that passed.
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           files: ./coverage/lcov.info
           flags: fleetops-data
           name: fleetops-data
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           # Forked pull requests cannot read secrets; Codecov accepts tokenless
           # uploads from public repositories, so this is empty rather than absent.
           token: ${{ secrets.CODECOV_TOKEN }}
