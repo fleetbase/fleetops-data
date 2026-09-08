@@ -38,12 +38,10 @@ export default class ServiceRateSerializer extends ApplicationSerializer.extend(
                     const savedRateFees = allRateFees.filter((f) => !f.isNew);
                     const unsavedRateFees = allRateFees.filter((f) => f.isNew);
 
-                    // Create a map of saved fees using the most stable key for the fee shape.
-                    const savedFeeKey = (fee) => {
-                        if (fee.id) {
-                            return `id:${fee.id}`;
-                        }
-
+                    // Key every fee by its shape, never by its id: a draft has no
+                    // id yet, so an id-keyed lookup could never match the row the
+                    // backend has just returned for it.
+                    const feeKey = (fee) => {
                         if (fee.unit === 'waypoint') {
                             return `drop:${fee.min}:${fee.max}:${fee.unit}`;
                         }
@@ -55,12 +53,12 @@ export default class ServiceRateSerializer extends ApplicationSerializer.extend(
                         return `distance:${fee.distance}`;
                     };
 
-                    const savedByKey = new Map(savedRateFees.map((f) => [savedFeeKey(f), f]));
+                    const savedFeeKeys = new Set(savedRateFees.map(feeKey));
                     const hasSavedMultiZoneFees = savedRateFees.some((fee) => fee.unit === 'multi_zone_distance');
 
                     // Only remove unsaved fees that duplicate saved fees
                     unsavedRateFees.forEach((fee) => {
-                        if ((hasSavedMultiZoneFees && fee.unit === 'multi_zone_distance') || savedByKey.has(savedFeeKey(fee))) {
+                        if ((hasSavedMultiZoneFees && fee.unit === 'multi_zone_distance') || savedFeeKeys.has(feeKey(fee))) {
                             serviceRate.get('rate_fees').removeObject(fee);
                             fee.unloadRecord();
                         }

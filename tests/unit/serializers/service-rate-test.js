@@ -59,7 +59,7 @@ module('Unit | Serializer | service rate', function (hooks) {
     });
 
     module('reconciling rate fees after a save', function () {
-        test('a per-drop draft survives, because a persisted fee is only ever keyed by its id', async function (assert) {
+        test('a per-drop draft is dropped once the backend returns the same band', async function (assert) {
             const serviceRate = this.store.push(this.store.normalize('service-rate', { uuid: 'rate_1' }));
             const draft = this.store.createRecord('service-rate-fee', { min: 1, max: 5, unit: 'waypoint' });
 
@@ -67,10 +67,11 @@ module('Unit | Serializer | service rate', function (hooks) {
 
             await this.reconcile(serviceRate);
 
-            // `savedFeeKey` short-circuits on `fee.id`, and every persisted fee has
-            // one, so the drop-band key a draft produces can never match. See
-            // DEFECTS.md.
-            assert.strictEqual(serviceRate.rate_fees.toArray().length, 2, 'the duplicate draft is left in place');
+            assert.deepEqual(
+                serviceRate.rate_fees.toArray().map((fee) => fee.id),
+                ['fee_1'],
+                'only the persisted row remains'
+            );
         });
 
         test('an unsaved per-drop draft with a different band is kept', async function (assert) {
@@ -101,14 +102,28 @@ module('Unit | Serializer | service rate', function (hooks) {
             );
         });
 
-        test('a fixed-distance draft is keyed by its distance and likewise survives', async function (assert) {
+        test('a fixed-distance draft is dropped once the backend returns the same distance', async function (assert) {
             const serviceRate = this.store.push(this.store.normalize('service-rate', { uuid: 'rate_4' }));
 
             serviceRate.rate_fees.pushObjects([this.savedFee('fee_1', { distance: 5 }), this.store.createRecord('service-rate-fee', { distance: 5 })]);
 
             await this.reconcile(serviceRate);
 
-            assert.strictEqual(serviceRate.rate_fees.toArray().length, 2, 'same cause as the per-drop case — see DEFECTS.md');
+            assert.deepEqual(
+                serviceRate.rate_fees.toArray().map((fee) => fee.id),
+                ['fee_1'],
+                'the draft matched the persisted row by distance'
+            );
+        });
+
+        test('a fixed-distance draft at a different distance is kept', async function (assert) {
+            const serviceRate = this.store.push(this.store.normalize('service-rate', { uuid: 'rate_4b' }));
+
+            serviceRate.rate_fees.pushObjects([this.savedFee('fee_1', { distance: 5 }), this.store.createRecord('service-rate-fee', { distance: 10 })]);
+
+            await this.reconcile(serviceRate);
+
+            assert.strictEqual(serviceRate.rate_fees.toArray().length, 2, 'a genuinely new distance survives');
         });
 
         test('a save response with no drafts to reconcile leaves the fees alone', async function (assert) {
@@ -199,7 +214,7 @@ module('Unit | Serializer | service rate', function (hooks) {
 
             await this.reconcile(serviceRate);
 
-            assert.strictEqual(serviceRate.rate_fees.toArray().length, 2, 'with no saved multi-zone rows the draft is keyed by shape, which never matches an id key');
+            assert.strictEqual(serviceRate.rate_fees.toArray().length, 2, 'with no saved multi-zone rows the draft is kept, since no persisted row shares its shape');
         });
 
         test('a response normalizing to another model type schedules no reconciliation', async function (assert) {

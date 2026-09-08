@@ -128,6 +128,24 @@ made to match the module it points at (`export * from …`) rather than deleted:
 every other addon module keeps its app-tree shim, and this one now behaves
 like them.
 
+### 10. `ServiceRateSerializer` could not deduplicate per-drop or distance fee drafts
+
+`normalizeSaveResponse` reconciles optimistically-created fee rows against what
+the backend returned. The lookup map was built from the persisted fees, and
+the key function short-circuited on `fee.id`, so every persisted key was
+`id:<uuid>` while every draft key was a shape key (`drop:…` / `distance:…`).
+The two could never match, so after saving a fixed-rate or per-drop service
+rate the optimistic draft rows stayed alongside the rows the backend returned
+and the editor showed duplicates until reload. Multi-zone rates were unaffected
+because a separate clause replaces the whole multi-zone set.
+
+Both sides are now keyed by fee shape alone. The `id:` identity was dropped
+rather than kept: the map's values were never read, and an identity a draft
+cannot have has no place in a comparison meant to match drafts. Two fees of
+genuinely different shape still never collapse.
+
+Covered by `tests/unit/serializers/service-rate-test.js`.
+
 ## Recorded, not fixed
 
 ### 7. `isRelationMissing` (upstream, `@fleetbase/ember-core`) ignores the relation
@@ -145,35 +163,6 @@ in hand.
 This lives in `@fleetbase/ember-core`, not this package. The Fleet-Ops tests pin
 the resulting behaviour so a fix upstream shows up here as a failing
 expectation rather than silently changing request volume.
-
-### 10. `ServiceRateSerializer` cannot deduplicate per-drop or distance fee drafts
-
-`normalizeSaveResponse` reconciles optimistically-created fee rows against what
-the backend returned, keyed by `savedFeeKey`:
-
-```js
-const savedFeeKey = (fee) => {
-    if (fee.id) { return `id:${fee.id}`; }
-    if (fee.unit === 'waypoint') { return `drop:${fee.min}:${fee.max}:${fee.unit}`; }
-    if (fee.unit === 'multi_zone_distance') { return `multi-zone:…`; }
-    return `distance:${fee.distance}`;
-};
-```
-
-The lookup map is built from `savedRateFees` — records that are not `isNew`, and
-therefore always have an `id`. Every saved key is thus `id:<uuid>`, while every
-draft key is a shape key (`drop:…` or `distance:…`). The two can never match, so
-`savedByKey.has(savedFeeKey(fee))` is always false and only the separate
-`hasSavedMultiZoneFees` clause ever removes anything.
-
-The practical effect: after saving a fixed-rate or per-drop service rate, the
-optimistic draft rows stay alongside the rows the backend returned, so the editor
-shows duplicates until the page is reloaded. Multi-zone rates are unaffected.
-
-Not fixed: the correct key depends on what the backend guarantees about fee
-identity across a save, which is not established anywhere in this repository.
-`tests/unit/serializers/service-rate-test.js` pins the current behaviour with the
-duplicates left in place.
 
 ## Unreachable defensive code
 
