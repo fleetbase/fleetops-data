@@ -131,10 +131,10 @@ export default class OrderModel extends Model {
     @notEmpty('purchase_rate_uuid') has_purchase_rate;
     @notEmpty('tracking_statuses') has_tracking_statuses;
     @notEmpty('payload_uuid') has_payload;
-    @not('hasTrackingNumber') missing_tracking_number;
-    @not('hasPurchaseRate') missing_purchase_rate;
-    @not('hasTrackingStatuses') missing_tracking_statuses;
-    @not('hasPayload') missing_payload;
+    @not('has_tracking_number') missing_tracking_number;
+    @not('has_purchase_rate') missing_purchase_rate;
+    @not('has_tracking_statuses') missing_tracking_statuses;
+    @not('has_payload') missing_payload;
     @bool('dispatched') isDispatched;
     @not('dispatched') isNotDispatched;
 

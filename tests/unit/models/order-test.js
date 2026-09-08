@@ -363,6 +363,23 @@ module('Unit | Model | order', function (hooks) {
             assert.true(order.isIntegratedVendorOrder);
         });
 
+        test('missing_* flags are the inverse of the presence macros', function (assert) {
+            const order = this.order();
+
+            assert.true(order.missing_tracking_number, 'no tracking number yet');
+            assert.true(order.missing_purchase_rate, 'no purchase rate yet');
+            assert.true(order.missing_payload, 'no payload yet');
+            assert.true(order.missing_tracking_statuses, 'no tracking statuses yet');
+
+            order.setProperties({ tracking_number_uuid: 'trk_1', purchase_rate_uuid: 'pr_1', payload_uuid: 'pay_1' });
+            order.tracking_statuses.pushObject(this.store.createRecord('tracking-status'));
+
+            assert.false(order.missing_tracking_number, 'a tracking number is no longer missing once its id is set');
+            assert.false(order.missing_purchase_rate, 'a purchase rate is no longer missing once its id is set');
+            assert.false(order.missing_payload, 'a payload is no longer missing once its id is set');
+            assert.false(order.missing_tracking_statuses, 'tracking statuses are no longer missing once one exists');
+        });
+
         test('dispatch flags mirror the dispatched attribute', function (assert) {
             const order = this.order();
 

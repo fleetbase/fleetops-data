@@ -99,6 +99,26 @@ records mixin, which is what every real serialization did already.
 
 Covered by `tests/unit/serializers/driver-test.js`.
 
+### 8. `order`'s `@not` macros referenced getters that did not exist
+
+```js
+@not('hasTrackingNumber') missing_tracking_number;
+@not('hasPurchaseRate') missing_purchase_rate;
+@not('hasTrackingStatuses') missing_tracking_statuses;
+@not('hasPayload') missing_payload;
+```
+
+The properties actually declared just above are `has_tracking_number`,
+`has_purchase_rate`, `has_tracking_statuses` and `has_payload`. `@not` on an
+undefined property yields `true`, so all four `missing_*` flags were permanently
+`true` regardless of the order's state. Each macro now points at the snake_case
+property that exists, so the flags are the inverse of the presence macros.
+
+This flips four public flags from always-true to correct. No consumer in the
+Fleetbase monorepo reads any of them, so nothing had adapted to the old values.
+
+Covered by `tests/unit/models/order-test.js`.
+
 ## Recorded, not fixed
 
 ### 7. `isRelationMissing` (upstream, `@fleetbase/ember-core`) ignores the relation
@@ -116,24 +136,6 @@ in hand.
 This lives in `@fleetbase/ember-core`, not this package. The Fleet-Ops tests pin
 the resulting behaviour so a fix upstream shows up here as a failing
 expectation rather than silently changing request volume.
-
-### 8. `order`'s `@not` macros reference getters that do not exist
-
-```js
-@not('hasTrackingNumber') missing_tracking_number;
-@not('hasPurchaseRate') missing_purchase_rate;
-@not('hasTrackingStatuses') missing_tracking_statuses;
-@not('hasPayload') missing_payload;
-```
-
-The properties actually declared just above are `has_tracking_number`,
-`has_purchase_rate`, `has_tracking_statuses` and `has_payload`. `@not` on an
-undefined property yields `true`, so all four `missing_*` flags are permanently
-`true` regardless of the order's state.
-
-Not fixed: correcting the names flips four public flags from always-true to
-correct, which is a behaviour change for any consumer that has adapted to the
-current values. Worth a deliberate decision rather than a drive-by.
 
 ### 9. `app/utils/geojson.js` re-exports a default that does not exist
 
