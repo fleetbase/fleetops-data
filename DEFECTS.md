@@ -225,21 +225,23 @@ getter now returns `this.waypoints.toArray()` and nothing else.
 
 Covered by `tests/unit/models/payload-test.js`.
 
+### 14. `service-rate` fee ranking and `?? []` fallbacks
+
+`rankFee` returned `2` for a fee that was neither new nor had an id, which an
+Ember Data record cannot be (it is either unsaved with no id, or loaded with
+one), and the function was copied three times. It is now a single module-level
+helper with two ranks: a persisted fee outranks a draft. The six
+`(this.rate_fees?.toArray?.() ?? [])` fallbacks guarded against a hasMany with
+no `toArray`, which never happens; they are plain `toArray()` calls now.
+
+Covered by `tests/unit/models/service-rate-test.js`.
+
 ## Unreachable defensive code
 
 These are listed in `scripts/unreachable-code.js`, which the coverage gate reads.
 The gate counts them as covered **and fails if any of them becomes reachable**,
 so the list cannot outlive its cause. None of them is a behavioural bug today;
 each is a guard that can never fire.
-
-### 14. `service-rate` fee ranking and `?? []` fallbacks
-
-`rankFee` returns `2` for a fee that is neither new nor has an id. An Ember Data
-record is either unsaved (no id, `isNew`) or loaded (has an id, not `isNew`), so
-the middle rank is unreachable in all three copies of the function.
-
-The `(this.rate_fees?.toArray?.() ?? [])` fallbacks likewise guard against a
-hasMany with no `toArray`, which cannot occur.
 
 ### 15. `DeviceSerializer` guards against a missing inherited hook
 

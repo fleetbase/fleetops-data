@@ -3,6 +3,17 @@ import { computed, action } from '@ember/object';
 import { getOwner } from '@ember/application';
 import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
 
+/**
+ * Rank a fee for de-duplication: a fee the backend has persisted outranks an
+ * unsaved draft of the same shape.
+ *
+ * @param {Model} fee
+ * @return {Number}
+ */
+function rankFee(fee) {
+    return fee.isNew ? 1 : 2;
+}
+
 export default class ServiceRate extends Model {
     /** @ids */
     @attr('string') public_id;
@@ -146,21 +157,10 @@ export default class ServiceRate extends Model {
         'isMultiZoneDistance'
     )
     get rateFees() {
-        const existing = (this.rate_fees?.toArray?.() ?? []).filter((r) => !r.isDeleted);
+        const existing = this.rate_fees.toArray().filter((r) => !r.isDeleted);
 
         if (this.isMultiZoneDistance) {
             const deduped = new Map();
-            const rankFee = (fee) => {
-                if (fee.id && !fee.isNew) {
-                    return 3;
-                }
-
-                if (!fee.isNew) {
-                    return 2;
-                }
-
-                return 1;
-            };
             const updatedAtMs = (fee) => {
                 const value = fee.updated_at instanceof Date ? fee.updated_at : new Date(fee.updated_at);
                 const timestamp = value.getTime();
@@ -193,17 +193,6 @@ export default class ServiceRate extends Model {
 
         if (this.isPerDrop) {
             const deduped = new Map();
-            const rankFee = (fee) => {
-                if (fee.id && !fee.isNew) {
-                    return 3;
-                }
-
-                if (!fee.isNew) {
-                    return 2;
-                }
-
-                return 1;
-            };
 
             existing
                 .filter((r) => r.unit === 'waypoint')
@@ -225,23 +214,11 @@ export default class ServiceRate extends Model {
     }
 
     @computed('parcel_fees.@each.{size,length,width,height,dimensions_unit,weight,weight_unit,fee,id}') get parcelFees() {
-        const existing = (this.parcel_fees?.toArray?.() ?? []).filter((fee) => !fee.isDeleted);
+        const existing = this.parcel_fees.toArray().filter((fee) => !fee.isDeleted);
         const deduped = new Map();
 
         const feeKey = (fee) => {
             return [fee.size, fee.length, fee.width, fee.height, fee.dimensions_unit, fee.weight, fee.weight_unit].join(':');
-        };
-
-        const rankFee = (fee) => {
-            if (fee.id && !fee.isNew) {
-                return 3;
-            }
-
-            if (!fee.isNew) {
-                return 2;
-            }
-
-            return 1;
         };
 
         existing.forEach((fee) => {
@@ -271,7 +248,7 @@ export default class ServiceRate extends Model {
 
     @action addPerDropRateFee() {
         const store = getOwner(this).lookup('service:store');
-        const existingFees = this.rate_fees?.toArray?.() ?? [];
+        const existingFees = this.rate_fees.toArray();
         const last = existingFees[existingFees.length - 1];
         const lastMax = Number(last?.max) || 0;
         const min = last ? lastMax + 1 : 1;
@@ -298,7 +275,7 @@ export default class ServiceRate extends Model {
 
     @action resetPerDropFees() {
         // Remove all existing per-drop fees
-        const existingFees = this.rate_fees?.toArray?.() ?? [];
+        const existingFees = this.rate_fees.toArray();
         existingFees.forEach((fee) => {
             if (fee.unit === 'waypoint') {
                 this.rate_fees.removeObject(fee);
@@ -313,7 +290,7 @@ export default class ServiceRate extends Model {
 
     @action addMultiZoneDistanceRule(attributes = {}) {
         const store = getOwner(this).lookup('service:store');
-        const existingFees = this.rate_fees?.toArray?.() ?? [];
+        const existingFees = this.rate_fees.toArray();
         const nextPriority = existingFees.filter((fee) => fee.unit === 'multi_zone_distance').reduce((highest, fee) => Math.max(highest, Number(fee.priority) || 0), 0) + 10;
 
         const newFee = store.createRecord('service-rate-fee', {
@@ -331,7 +308,7 @@ export default class ServiceRate extends Model {
     }
 
     @action addMultiZoneDistanceFallbackRule() {
-        const existingFallback = (this.rate_fees?.toArray?.() ?? []).find((fee) => fee.unit === 'multi_zone_distance' && fee.is_fallback && !fee.isDeleted);
+        const existingFallback = this.rate_fees.toArray().find((fee) => fee.unit === 'multi_zone_distance' && fee.is_fallback && !fee.isDeleted);
 
         if (existingFallback) {
             return existingFallback;

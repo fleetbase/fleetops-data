@@ -22,14 +22,6 @@
  * This list should shrink, never grow.
  */
 module.exports = {
-    'addon/models/service-rate.js': {
-        reason:
-            'Two shapes of dead defence. `rankFee` returns 2 for a fee that is neither new nor has an id, which Ember Data cannot produce — a record is either unsaved (no id) or loaded (has one). ' +
-            'The `?? []` fallbacks guard against `rate_fees`/`parcel_fees` having no `toArray`, which is never true of a hasMany. See DEFECTS.md §14.',
-        statements: [141, 184, 223],
-        branches: ['if@140#0', 'if@183#0', 'if@222#0', 'binary-expr@131#1', 'binary-expr@210#1', 'binary-expr@256#1', 'binary-expr@283#1', 'binary-expr@298#1', 'binary-expr@316#1'],
-    },
-
     'addon/serializers/device.js': {
         reason:
             'The `return;` for a missing inherited serializePolymorphicType cannot run: `super` resolves lexically against the class prototype chain, where JSONSerializer always provides one. ' +
