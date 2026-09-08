@@ -33,6 +33,28 @@ module('Unit | Utility | should-not-load-relation', function (hooks) {
         assert.true(shouldNotLoadRelation(order, 'payload'), 'the record is already in hand');
     });
 
+    test('an async relationship is read through its reference, not the promise proxy it hands back', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const driver = store.createRecord('driver', { vehicle_uuid: 'veh_1' });
+
+        assert.false(shouldNotLoadRelation(driver, 'vehicle'), 'an unloaded async belongsTo still warrants a load');
+
+        driver.set('vehicle', store.push(store.normalize('vehicle', { uuid: 'veh_1' })));
+
+        assert.true(shouldNotLoadRelation(driver, 'vehicle'), 'and once the record is in hand it does not');
+    });
+
+    test('a hasMany counts as loaded once it holds a record', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const order = store.createRecord('order', { tracking_number_uuid: 'trk_1' });
+
+        assert.false(shouldNotLoadRelation(order, 'tracking_statuses', 'tracking_number_uuid'), 'an empty collection is not loaded');
+
+        order.tracking_statuses.pushObject(store.createRecord('tracking-status'));
+
+        assert.true(shouldNotLoadRelation(order, 'tracking_statuses', 'tracking_number_uuid'));
+    });
+
     test('the id attribute is derived by underscoring the relationship name', function (assert) {
         const store = this.owner.lookup('service:store');
         const order = store.createRecord('order', { order_config_uuid: 'config_1' });

@@ -269,9 +269,11 @@ export function assertPointAccessors(assert, record, { attribute = 'location' } 
  * Assert the contract of the promise-based `load<Relation>()` helpers that
  * fuel-report, issue, driver and vehicle all share.
  *
- * Each one fetches the related record when the model carries its identifier,
- * assigns it, and resolves; otherwise it resolves with whatever is already in
- * hand. A rejected fetch propagates rather than being swallowed.
+ * Each one fetches the related record when the model carries its identifier
+ * but the record is not loaded, assigns it, and resolves. When the record is
+ * already in hand, or there is no identifier to fetch by, it resolves with
+ * whatever the relationship holds without touching the store. A rejected fetch
+ * propagates rather than being swallowed.
  *
  * @param {Assert} assert
  * @param {Object} options
@@ -309,6 +311,14 @@ export async function assertRelationLoader(assert, { store, build, method, relat
 
         assert.notOk(await withoutId[method](), `${method} resolves with the empty relationship when there is no identifier`);
         assert.deepEqual(calls, [], `${method} makes no request without an identifier`);
+
+        const alreadyLoaded = build();
+        alreadyLoaded.set(idAttribute, 'related_1');
+        alreadyLoaded.set(relationship, related);
+        calls.length = 0;
+
+        assert.true((await alreadyLoaded[method]()) === related, `${method} resolves with the ${relationship} already in hand`);
+        assert.deepEqual(calls, [], `${method} makes no request when ${relationship} is already loaded`);
 
         store.findRecord = () => Promise.reject(new Error('network down'));
 

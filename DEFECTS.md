@@ -146,9 +146,11 @@ genuinely different shape still never collapse.
 
 Covered by `tests/unit/serializers/service-rate-test.js`.
 
-## Recorded, not fixed
+### 7. The relation loaders re-fetched records that were already in hand
 
-### 7. `isRelationMissing` (upstream, `@fleetbase/ember-core`) ignores the relation
+`driver.loadVehicle()`, `driver.loadVendor()`, `fuelReport.loadVehicle()`,
+`fuelReport.loadDriver()`, `issue.loadVehicle()` and `issue.loadDriver()` all
+guarded their fetch with `isRelationMissing` from `@fleetbase/ember-core`:
 
 ```js
 const isMissingRelation = isset(model, `${relation}_uuid`) && !isset(model, ``);
@@ -156,13 +158,30 @@ const isMissingRelation = isset(model, `${relation}_uuid`) && !isset(model, ``);
 
 The second `isset` is passed an empty path, so it is always falsy and the
 expression reduces to "the identifier attribute is set". The relationship itself
-is never consulted, so `driver.loadVehicle()`, `fuelReport.loadDriver()` and the
-other loaders that use it re-fetch on every call even when the record is already
-in hand.
+is never consulted, so every loader re-fetched on every call even when the
+record was already loaded.
 
-This lives in `@fleetbase/ember-core`, not this package. The Fleet-Ops tests pin
-the resulting behaviour so a fix upstream shows up here as a failing
-expectation rather than silently changing request volume.
+The six call sites now use this package's own
+`addon/utils/is-relation-missing.js`, the exact negation of
+`shouldNotLoadRelation`, which the order loaders already used. That predicate
+now reads a declared relationship through its Ember Data reference rather than
+the property itself: the driver's `vehicle` and `vendor` and the fuel report's
+`vehicle` and `driver` are async, and an async relationship hands back a
+promise proxy that is never blank, so a plain property check would have made
+those loaders never fetch at all. Every relationship the order loaders check is
+`async: false`, so their behaviour is unchanged.
+
+A consumer will notice that these loaders now resolve from the loaded record
+without a request when the relationship is already populated, and still fetch
+when only the identifier is present.
+
+**Still broken upstream.** `@fleetbase/ember-core/utils/is-relation-missing`
+has not been changed; any other consumer of it still re-fetches on every call.
+Fixing it there is out of scope for this repository.
+
+Covered by `tests/unit/utils/is-relation-missing-test.js`,
+`tests/unit/utils/should-not-load-relation-test.js` and the loader tests in
+`tests/unit/models/{driver,fuel-report,issue}-test.js`.
 
 ## Unreachable defensive code
 
