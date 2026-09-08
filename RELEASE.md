@@ -1,13 +1,12 @@
-> v0.1.40 ~ "RELEASE_NOTES_PLACEHOLDER — replace this line with the release title"
+> v0.2.0 ~ "First-class trailers, inspections and full test coverage"
 
 ---
 ## Highlights
 
-RELEASE_NOTES_PLACEHOLDER
-
-Describe what changed in this release. The first line above must name the version
-being released, and both placeholder markers must be gone, or the release workflow
-refuses to tag.
+- **First-class Trailer data models** — trailer models, serializers and data contracts for the console, with current trailers embedded on the vehicle serializer.
+- **Inspection data models** — models and serializers backing the maintenance platform upgrade.
+- **`is-waypoint-record` util** — moved out of `ember-core` and into this package.
+- **Test coverage campaign** — a 100% coverage gate wired into CI, with Codecov reporting.
 
 ---
 ## Need help?
