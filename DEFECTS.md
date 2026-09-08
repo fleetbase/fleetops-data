@@ -202,23 +202,26 @@ work-order serializers already do, so an unset customer writes
 
 Covered by `tests/unit/serializers/entity-test.js`.
 
+### 12. Two order loaders repeated a check that had already returned
+
+`loadPayload` treated an `existingPayload` whose `waypoints` was neither a
+ManyArray nor a plain array as a reason to fetch. Ember Data always
+materializes a hasMany as a ManyArray, so that branch, and the
+`meta._index_resource` flag only it consulted, could never matter.
+`loadCustomer` repeated `!this.customer_uuid || !isBlank(this.customer)` after
+`shouldNotLoadRelation(this, 'customer')` had just returned `false` for exactly
+those cases. Both guards were deleted. `loadPayload` now reuses an existing
+payload unless its waypoints were counted but never loaded, which was the one
+case that ever forced a refetch.
+
+Covered by `tests/unit/models/order-test.js`.
+
 ## Unreachable defensive code
 
 These are listed in `scripts/unreachable-code.js`, which the coverage gate reads.
 The gate counts them as covered **and fails if any of them becomes reachable**,
 so the list cannot outlive its cause. None of them is a behavioural bug today;
 each is a guard that can never fire.
-
-### 12. Two order loaders repeat a check that already returned
-
-`loadPayload` line 492 requires an `existingPayload` whose `waypoints` is neither
-a ManyArray nor a plain array. Ember Data always materializes a hasMany as a
-ManyArray, so the condition cannot hold.
-
-`loadCustomer` line 517 is `if (!this.customer_uuid || !isBlank(this.customer))`,
-but `shouldNotLoadRelation(this, 'customer')` on the line above already returns
-`true` for exactly those two cases. Reaching line 517 means both operands are
-false.
 
 ### 13. `payload.orderWaypoints` guards against an unsettable relationship
 

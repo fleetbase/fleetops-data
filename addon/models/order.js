@@ -478,18 +478,14 @@ export default class OrderModel extends Model {
             return;
         }
 
+        // A payload from an index listing only counts its waypoints; one that has
+        // been counted but holds none has to be fetched in full.
         const existingPayload = this.payload;
-        const isLightweightIndexOrder = this.meta?._index_resource === true;
-        const hasLoadedWaypointCollection = typeof existingPayload?.waypoints?.toArray === 'function' || isArray(existingPayload?.waypoints);
         const indexedWaypointCount = Number(existingPayload?.waypoints_count ?? 0);
         const loadedWaypointCount = Number(existingPayload?.waypoints?.length ?? 0);
         const needsWaypointUpgrade = indexedWaypointCount > 0 && loadedWaypointCount === 0;
 
-        if (existingPayload && hasLoadedWaypointCollection && !needsWaypointUpgrade) {
-            return existingPayload;
-        }
-
-        if (existingPayload && !hasLoadedWaypointCollection && !isLightweightIndexOrder) {
+        if (existingPayload && !needsWaypointUpgrade) {
             return existingPayload;
         }
 
@@ -511,10 +507,6 @@ export default class OrderModel extends Model {
         const owner = getOwner(this);
         const store = owner.lookup('service:store');
         if (shouldNotLoadRelation(this, 'customer')) {
-            return;
-        }
-
-        if (!this.customer_uuid || !isBlank(this.customer)) {
             return;
         }
 

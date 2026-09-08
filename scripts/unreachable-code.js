@@ -22,15 +22,6 @@
  * This list should shrink, never grow.
  */
 module.exports = {
-    'addon/models/order.js': {
-        reason:
-            'Two guards in loadPayload/loadCustomer are already implied by the checks above them. ' +
-            'loadPayload line 492 requires a payload whose `waypoints` is neither a ManyArray nor an array, which Ember Data cannot produce; ' +
-            'loadCustomer line 517 repeats the condition shouldNotLoadRelation() has just returned false for. See DEFECTS.md §12.',
-        statements: [493, 518],
-        branches: ['if@492#0', 'binary-expr@492#2', 'if@517#0'],
-    },
-
     'addon/models/payload.js': {
         reason:
             'orderWaypoints falls back to returning `this.waypoints` when the relationship has no `toArray`. ' +
