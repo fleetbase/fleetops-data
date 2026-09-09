@@ -6,8 +6,9 @@ import shouldNotLoadRelation from './should-not-load-relation';
  *
  * This is the exact negation of `shouldNotLoadRelation`, kept under the name the
  * relation loaders read naturally. The `@fleetbase/ember-core` util of the same
- * name never consults the relationship at all (see DEFECTS.md), which is why the
- * loaders use this one.
+ * name passes an empty path to its second `isset`, so it never consults the
+ * relationship and reports it missing whenever the identifier is set; that is
+ * why the loaders use this one.
  *
  * @param {Object} model
  * @param {String} relationship

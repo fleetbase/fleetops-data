@@ -9,8 +9,8 @@
  * defends against — and impossible to delete, it can be listed here rather
  * than weakening the gate. The gate treats a listed location as covered and
  * **fails if it becomes reachable**, so an exemption can never quietly widen
- * or outlive its cause. Every entry must have a matching section in
- * DEFECTS.md explaining why deleting the code was not an option.
+ * or outlive its cause. Every entry's reason must explain both why the code
+ * cannot run and why deleting it was not an option.
  *
  * The list is empty: every clause that used to be listed here was either made
  * reachable by reordering or deleted outright. Prefer that to adding an entry.

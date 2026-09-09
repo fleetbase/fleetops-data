@@ -673,7 +673,7 @@ function run({
     const exempted = Object.entries(unreachable);
     if (exempted.length > 0) {
         log('');
-        log('Documented unreachable code (counted as covered, see DEFECTS.md):');
+        log('Documented unreachable code (counted as covered, see scripts/unreachable-code.js):');
         for (const [file, entry] of exempted) {
             const counts = ['statements', 'branches', 'functions']
                 .filter((metric) => (entry[metric] || []).length > 0)
