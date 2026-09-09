@@ -295,6 +295,46 @@ workflow already ran individually, so two definitions of "what CI runs" could
 drift unnoticed. The script is deleted; the workflow keeps its separate steps
 for log granularity.
 
+## Found while merging v0.2.0
+
+### 21. `EquipmentSerializer` reintroduced the unreachable inherited-hook guard
+
+The equipment serializer from the maintenance platform upgrade carried the
+same `typeof super.serializePolymorphicType === 'function'` guard removed from
+`DeviceSerializer` in §15, and folded its domain-type restore into `normalize`
+so that its `if (included)` and `?? {}` branches could only be reached by
+hand-built input. It now mirrors `DeviceSerializer`: the guard is gone, and
+`equipableModelNameFromType`, `shouldRestoreEquipableDomainType` and
+`restoreEquipableDomainType` are separate methods with their own tests.
+
+Covered by `tests/unit/serializers/equipment-test.js`.
+
+### 22. The lockfile merge dropped two peer suffixes
+
+Resolving `pnpm-lock.yaml` across the four release pull requests left
+`@ember/optional-features` and `@ember/string` keyed without their
+`(supports-color@8.1.1)` peer suffix in the importer section while the package
+section still carried it, so `pnpm install --frozen-lockfile` failed with
+`ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY`. The two lines were restored from the
+last consistent lockfile rather than regenerated.
+
+---
+
+## Open observations
+
+### 23. `is-waypoint-record` is shipped by both this addon and `@fleetbase/ember-core`
+
+`@fleetbase/ember-core` 0.3.24 ships `app/utils/is-waypoint-record.js`
+re-exporting its own `utils/is-waypoint-record`, which imports
+`../models/waypoint` — a model ember-core does not have. This addon ships the
+same shim for its own, working, util. Which one answers to
+`<app>/utils/is-waypoint-record` in a consuming application depends on addon
+ordering; in this addon's dummy app the ember-core shim won and the module
+failed to load. The unit test therefore imports the util from
+`@fleetbase/fleetops-data/utils/is-waypoint-record` directly, and consumers
+should do the same until the ember-core copy is removed upstream. Not fixable
+in this repository.
+
 ---
 
 ## How coverage exemptions are enforced

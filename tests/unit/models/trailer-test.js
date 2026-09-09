@@ -42,5 +42,36 @@ module('Unit | Model | trailer', function (hooks) {
         assert.strictEqual(trailer.displayName, 'Reefer 12');
         assert.true(trailer.isOnline);
         assert.strictEqual(trailer.lastOnlineAt, null);
+        assert.strictEqual(trailer.lastOnlineAgo, null);
+    });
+
+    test('attachedAt is null until the trailer has been attached', function (assert) {
+        const trailer = this.owner.lookup('service:store').createRecord('trailer');
+
+        assert.strictEqual(trailer.attachedAt, null);
+    });
+
+    test('searchString joins every identifying field that is set', function (assert) {
+        const trailer = this.owner.lookup('service:store').createRecord('trailer', { name: 'Reefer 12', code: 'TR-12', vin: '1UYVS2538' });
+
+        assert.strictEqual(trailer.searchString, 'Reefer 12 TR-12 1UYVS2538', 'unset fields are left out rather than rendered as undefined');
+    });
+
+    test('coordinates are exposed as a Leaflet-style pair and validated', function (assert) {
+        const trailer = this.owner.lookup('service:store').createRecord('trailer', { location: { type: 'Point', coordinates: [103.8198, 1.3521] } });
+
+        assert.deepEqual(trailer.latlng, { lat: 1.3521, lng: 103.8198 });
+        assert.true(trailer.hasValidCoordinates);
+        assert.false(trailer.hasInvalidCoordinates);
+
+        trailer.set('location', { type: 'Point', coordinates: [0, 1.3521] });
+        assert.false(trailer.hasValidCoordinates, 'null island is rejected before the range check');
+
+        trailer.set('location', { type: 'Point', coordinates: [103.8198, 0] });
+        assert.false(trailer.hasValidCoordinates, 'a zero latitude is rejected too');
+
+        trailer.set('location', { type: 'Point', coordinates: [200, 100] });
+        assert.false(trailer.hasValidCoordinates, 'out-of-range coordinates are rejected');
+        assert.true(trailer.hasInvalidCoordinates);
     });
 });
