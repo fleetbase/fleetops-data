@@ -38,10 +38,7 @@ export default class DeviceSerializer extends ApplicationSerializer.extend(Embed
         let key = relationship.key;
 
         if (key !== 'attachable') {
-            if (typeof super.serializePolymorphicType === 'function') {
-                return super.serializePolymorphicType(...arguments);
-            }
-            return;
+            return super.serializePolymorphicType(...arguments);
         }
 
         const belongsTo = snapshot.belongsTo(key);
@@ -81,7 +78,7 @@ export default class DeviceSerializer extends ApplicationSerializer.extend(Embed
             .replace(/^attachable-/, '')
             .toLowerCase();
 
-        if (!['vehicle', 'asset'].includes(type)) {
+        if (!['vehicle', 'asset', 'trailer'].includes(type)) {
             return undefined;
         }
 

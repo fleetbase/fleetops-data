@@ -131,10 +131,10 @@ export default class OrderModel extends Model {
     @notEmpty('purchase_rate_uuid') has_purchase_rate;
     @notEmpty('tracking_statuses') has_tracking_statuses;
     @notEmpty('payload_uuid') has_payload;
-    @not('hasTrackingNumber') missing_tracking_number;
-    @not('hasPurchaseRate') missing_purchase_rate;
-    @not('hasTrackingStatuses') missing_tracking_statuses;
-    @not('hasPayload') missing_payload;
+    @not('has_tracking_number') missing_tracking_number;
+    @not('has_purchase_rate') missing_purchase_rate;
+    @not('has_tracking_statuses') missing_tracking_statuses;
+    @not('has_payload') missing_payload;
     @bool('dispatched') isDispatched;
     @not('dispatched') isNotDispatched;
 
@@ -155,7 +155,7 @@ export default class OrderModel extends Model {
             return payload.waypoints.firstObject.name ?? payload.waypoints.firstObject.street1;
         }
 
-        if (meta.pickup_is_driver_location === true) {
+        if (meta?.pickup_is_driver_location === true) {
             return 'Dynamic';
         }
 
@@ -173,7 +173,7 @@ export default class OrderModel extends Model {
             return payload.waypoints.lastObject.name ?? payload.waypoints.lastObject.street1;
         }
 
-        if (meta.pickup_is_driver_location === true) {
+        if (meta?.pickup_is_driver_location === true) {
             return 'Dynamic';
         }
 
@@ -478,18 +478,14 @@ export default class OrderModel extends Model {
             return;
         }
 
+        // A payload from an index listing only counts its waypoints; one that has
+        // been counted but holds none has to be fetched in full.
         const existingPayload = this.payload;
-        const isLightweightIndexOrder = this.meta?._index_resource === true;
-        const hasLoadedWaypointCollection = typeof existingPayload?.waypoints?.toArray === 'function' || isArray(existingPayload?.waypoints);
         const indexedWaypointCount = Number(existingPayload?.waypoints_count ?? 0);
         const loadedWaypointCount = Number(existingPayload?.waypoints?.length ?? 0);
         const needsWaypointUpgrade = indexedWaypointCount > 0 && loadedWaypointCount === 0;
 
-        if (existingPayload && hasLoadedWaypointCollection && !needsWaypointUpgrade) {
-            return existingPayload;
-        }
-
-        if (existingPayload && !hasLoadedWaypointCollection && !isLightweightIndexOrder) {
+        if (existingPayload && !needsWaypointUpgrade) {
             return existingPayload;
         }
 
@@ -511,10 +507,6 @@ export default class OrderModel extends Model {
         const owner = getOwner(this);
         const store = owner.lookup('service:store');
         if (shouldNotLoadRelation(this, 'customer')) {
-            return;
-        }
-
-        if (!this.customer_uuid || !isBlank(this.customer)) {
             return;
         }
 

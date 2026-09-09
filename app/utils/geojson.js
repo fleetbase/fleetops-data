@@ -1,1 +1,1 @@
-export { default } from '@fleetbase/fleetops-data/utils/geojson';
+export * from '@fleetbase/fleetops-data/utils/geojson';
