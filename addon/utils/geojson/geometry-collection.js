@@ -9,7 +9,7 @@ export default class GeometryCollection extends GeoJson {
             Object.assign(this, input);
         } else if (isArray(input)) {
             this.geometries = input;
-        } else if (input.coordinates && input.type) {
+        } else if (input && input.coordinates && input.type) {
             this.type = 'GeometryCollection';
             this.geometries = [input];
         } else {

@@ -3,7 +3,7 @@ import { computed, get } from '@ember/object';
 import { not } from '@ember/object/computed';
 import { getOwner } from '@ember/application';
 import { format as formatDate, isValid as isValidDate, formatDistanceToNow } from 'date-fns';
-import isRelationMissing from '@fleetbase/ember-core/utils/is-relation-missing';
+import isRelationMissing from '../utils/is-relation-missing';
 import isValidCoordinates from '@fleetbase/ember-core/utils/is-valid-coordinates';
 import config from 'ember-get-config';
 

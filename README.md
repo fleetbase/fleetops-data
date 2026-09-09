@@ -1,5 +1,7 @@
 # @fleetbase/fleetops-data
 
+[![codecov](https://codecov.io/gh/fleetbase/fleetops-data/graph/badge.svg)](https://codecov.io/gh/fleetbase/fleetops-data)
+
 [Short description of the addon.]
 
 
@@ -29,4 +31,4 @@ See the [Contributing](CONTRIBUTING.md) guide for details.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE.md).
+This project is licensed under the [GNU Affero General Public License v3.0 or later](LICENSE.md) (`AGPL-3.0-or-later`).
