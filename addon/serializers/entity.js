@@ -33,7 +33,6 @@ export default class EntitySerializer extends ApplicationSerializer.extend(Embed
     serializePolymorphicType(snapshot, json, relationship) {
         let key = relationship.key;
         let belongsTo = snapshot.belongsTo(key);
-        let type = belongsTo.modelName;
 
         // if snapshot already has type filled respect manual input
         const isPolymorphicTypeBlank = isBlank(snapshot.attr(key + '_type'));
@@ -44,7 +43,7 @@ export default class EntitySerializer extends ApplicationSerializer.extend(Embed
             if (!belongsTo) {
                 json[key + '_type'] = null;
             } else {
-                json[key + '_type'] = `fleet-ops:${type}`;
+                json[key + '_type'] = `fleet-ops:${belongsTo.modelName}`;
             }
         }
     }

@@ -1,0 +1,59 @@
+# Codecov configuration for @fleetbase/fleetops-data.
+#
+# The repository enforces 100% coverage of first-party addon source locally via
+# `pnpm run coverage:check`; these settings make Codecov agree rather than act as
+# a softer second opinion. Targets are absolute (100%) with a zero threshold, so
+# a single uncovered line fails the check.
+
+codecov:
+  require_ci_to_pass: true
+  notify:
+    # Only one upload is produced per run; report as soon as it lands.
+    after_n_builds: 1
+
+# Two decimal places so a report that is one line short of complete renders as
+# 99.98% rather than rounding up to a misleading 100%.
+coverage:
+  precision: 2
+  round: down
+  range: '100...100'
+
+  status:
+    project:
+      default:
+        target: 100%
+        threshold: 0%
+        flags:
+          - fleetops-data
+        if_ci_failed: error
+    patch:
+      default:
+        target: 100%
+        threshold: 0%
+        flags:
+          - fleetops-data
+        if_ci_failed: error
+
+flags:
+  fleetops-data:
+    paths:
+      - addon/
+    # Every run uploads a complete report for the whole addon, so stale coverage
+    # must never be carried forward from an earlier commit.
+    carryforward: false
+
+# Only first-party addon source counts. The app tree is re-export shims, and the
+# dummy application, tests and tooling are not the product.
+ignore:
+  - 'app/**'
+  - 'tests/**'
+  - 'scripts/**'
+  - 'config/**'
+  - '.github/**'
+
+comment:
+  layout: 'header, diff, flags, files, footer'
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true

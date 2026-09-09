@@ -1,25 +1,51 @@
 import { module, test } from 'qunit';
-
 import { setupTest } from 'dummy/tests/helpers';
+import ApplicationSerializer from '@fleetbase/ember-core/serializers/application';
+import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
+import { assertEmbeddedAttrs, assertNormalizesUuidAsId, assertPrimaryKeyIsUuid } from 'dummy/tests/helpers/serializer-contract';
 
 module('Unit | Serializer | equipment', function (hooks) {
     setupTest(hooks);
 
-    // Replace this with your real tests.
-    test('it exists', function (assert) {
-        let store = this.owner.lookup('service:store');
-        let serializer = store.serializerFor('equipment');
-
-        assert.ok(serializer);
+    hooks.beforeEach(function () {
+        this.store = this.owner.lookup('service:store');
+        this.serializer = this.store.serializerFor('equipment');
     });
 
-    test('it serializes records', function (assert) {
-        let store = this.owner.lookup('service:store');
-        let record = store.createRecord('equipment', {});
+    test('it is a Fleetbase application serializer that embeds records', function (assert) {
+        assert.ok(this.serializer instanceof ApplicationSerializer, 'it inherits the Fleetbase wire conventions');
+        assert.ok(EmbeddedRecordsMixin.detect(this.serializer), 'it can inline related records');
+        assertPrimaryKeyIsUuid(assert, this.store, 'equipment');
+    });
 
-        let serializedRecord = record.serialize();
+    test('it declares exactly the expected relationship serialization contract', function (assert) {
+        assertEmbeddedAttrs(assert, this.store, 'equipment', {});
+    });
 
-        assert.ok(serializedRecord);
+    test('a server payload is normalized onto a record keyed by uuid', function (assert) {
+        const record = assertNormalizesUuidAsId(assert, this.store, 'equipment', { name: 'contract-value' });
+
+        assert.strictEqual(record.name, 'contract-value', 'the attribute survives normalization');
+    });
+
+    test('a record serializes its attributes back onto the wire', function (assert) {
+        const record = this.store.createRecord('equipment', { name: 'contract-value' });
+
+        assert.strictEqual(record.serialize().name, 'contract-value');
+    });
+
+    test('the warranty relationship is linked by uuid when it is not embedded', function (assert) {
+        const related = this.store.push(this.store.normalize('warranty', { uuid: 'related_1' }));
+        const record = this.store.createRecord('equipment');
+        record.set('warranty', related);
+
+        assert.strictEqual(record.serialize().warranty_uuid, 'related_1', 'the application serializer always adds the identifier');
+    });
+
+    test('an unset warranty contributes no identifier', function (assert) {
+        const json = this.store.createRecord('equipment').serialize();
+
+        assert.notOk(json.warranty_uuid, 'a relationship that was never set is simply absent');
     });
 
     test('it supports polymorphic vehicle and trailer attachments', function (assert) {

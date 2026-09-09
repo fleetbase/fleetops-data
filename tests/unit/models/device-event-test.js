@@ -1,14 +1,13 @@
 import { module, test } from 'qunit';
 
 import { setupTest } from 'dummy/tests/helpers';
+import { FIXED_DATE_LONG, FIXED_DATE_SHORT, THREE_DAYS_DISTANCE, assertDateGetters } from 'dummy/tests/helpers/model-contract';
 
 module('Unit | Model | device event', function (hooks) {
     setupTest(hooks);
 
-    test('it exists', function (assert) {
-        let store = this.owner.lookup('service:store');
-        let model = store.createRecord('device-event', {});
-        assert.ok(model);
+    hooks.beforeEach(function () {
+        this.store = this.owner.lookup('service:store');
     });
 
     test('it exposes connectivity identity payload fields', function (assert) {
@@ -34,5 +33,80 @@ module('Unit | Model | device event', function (hooks) {
             label: 'AFAQY',
             icon: '/engines-dist/images/telematics/providers/afaqy.webp',
         });
+    });
+
+    test('updated_at renders its formatting getters', function (assert) {
+        assertDateGetters(
+            assert,
+            this.store.createRecord('device-event'),
+            'updated_at',
+            {
+                updatedAt: FIXED_DATE_LONG,
+                updatedAtShort: FIXED_DATE_SHORT,
+            },
+            {
+                updatedAgo: THREE_DAYS_DISTANCE,
+            }
+        );
+    });
+
+    test('created_at renders its formatting getters', function (assert) {
+        assertDateGetters(
+            assert,
+            this.store.createRecord('device-event'),
+            'created_at',
+            {
+                createdAt: FIXED_DATE_LONG,
+                createdAtShort: FIXED_DATE_SHORT,
+            },
+            {
+                createdAgo: THREE_DAYS_DISTANCE,
+            }
+        );
+    });
+
+    test('deleted_at renders its formatting getters', function (assert) {
+        assertDateGetters(
+            assert,
+            this.store.createRecord('device-event'),
+            'deleted_at',
+            {
+                deletedAt: FIXED_DATE_LONG,
+                deletedAtShort: FIXED_DATE_SHORT,
+            },
+            {
+                deletedAgo: THREE_DAYS_DISTANCE,
+            }
+        );
+    });
+
+    test('occurred_at renders its formatting getters', function (assert) {
+        assertDateGetters(
+            assert,
+            this.store.createRecord('device-event'),
+            'occurred_at',
+            {
+                occurredAt: FIXED_DATE_LONG,
+                occurredAtShort: FIXED_DATE_SHORT,
+            },
+            {
+                occurredAgo: THREE_DAYS_DISTANCE,
+            }
+        );
+    });
+
+    test('processed_at renders its formatting getters', function (assert) {
+        assertDateGetters(
+            assert,
+            this.store.createRecord('device-event'),
+            'processed_at',
+            {
+                processedAt: FIXED_DATE_LONG,
+                processedAtShort: FIXED_DATE_SHORT,
+            },
+            {
+                processedAgo: THREE_DAYS_DISTANCE,
+            }
+        );
     });
 });

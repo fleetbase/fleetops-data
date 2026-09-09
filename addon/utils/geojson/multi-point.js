@@ -6,15 +6,15 @@ export default class MultiPoint extends GeoJson {
     constructor(input) {
         super();
 
-        if (input && input.type === 'MultiPolygon' && input.coordinates) {
+        if (input && input.type === 'MultiPoint' && input.coordinates) {
             Object.assign(this, input);
         } else if (isArray(input)) {
             this.coordinates = input;
         } else {
-            throw 'GeoJSON: invalid input for new MultiPolygon';
+            throw 'GeoJSON: invalid input for new MultiPoint';
         }
 
-        this.type = 'MultiPolygon';
+        this.type = 'MultiPoint';
     }
 
     forEach(func) {

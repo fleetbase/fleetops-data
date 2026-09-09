@@ -1,4 +1,4 @@
-import GeoJson, { EarthRadius, MercatorCRS, DegreesPerRadian, RadiansPerDegree } from './geo-json';
+import GeoJson, { EarthRadius, DegreesPerRadian, RadiansPerDegree } from './geo-json';
 import Feature from './feature';
 import closedPolygon from './closed-polygon';
 
@@ -36,32 +36,36 @@ function eachPosition(coordinates, func) {
     return coordinates;
 }
 
-function applyConverter(geojson, converter, noCrs) {
+/**
+ * Convert every position in a GeoJSON object in place.
+ *
+ * `positionToGeographic` is the only converter this module ever applies — the
+ * Mercator direction is used internally by `createCircle` on a bare position, not
+ * on a GeoJSON object — so the result is always geographic and any inherited
+ * Mercator CRS annotation is stale by the time we return.
+ *
+ * @param {Object} geojson
+ * @param {Function} converter
+ * @return {Object} the same object, mutated
+ */
+function applyConverter(geojson, converter) {
     if (geojson.type === 'Point') {
         geojson.coordinates = converter(geojson.coordinates);
     } else if (geojson.type === 'Feature') {
-        geojson.geometry = applyConverter(geojson.geometry, converter, true);
+        geojson.geometry = applyConverter(geojson.geometry, converter);
     } else if (geojson.type === 'FeatureCollection') {
         for (var f = 0; f < geojson.features.length; f++) {
-            geojson.features[f] = applyConverter(geojson.features[f], converter, true);
+            geojson.features[f] = applyConverter(geojson.features[f], converter);
         }
     } else if (geojson.type === 'GeometryCollection') {
         for (var g = 0; g < geojson.geometries.length; g++) {
-            geojson.geometries[g] = applyConverter(geojson.geometries[g], converter, true);
+            geojson.geometries[g] = applyConverter(geojson.geometries[g], converter);
         }
     } else {
         geojson.coordinates = eachPosition(geojson.coordinates, converter);
     }
 
-    if (!noCrs) {
-        if (converter === positionToMercator) {
-            geojson.crs = MercatorCRS;
-        }
-    }
-
-    if (converter === positionToGeographic) {
-        delete geojson.crs;
-    }
+    delete geojson.crs;
 
     return geojson;
 }
