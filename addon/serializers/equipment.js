@@ -3,6 +3,11 @@ import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
 import { isBlank } from '@ember/utils';
 
 export default class EquipmentSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
+    /**
+     * Embedded relationship attributes
+     *
+     * @var {Object}
+     */
     get attrs() {
         return {
             warranty: { embedded: 'always' },
@@ -13,22 +18,17 @@ export default class EquipmentSerializer extends ApplicationSerializer.extend(Em
     }
 
     normalize(model, hash, prop) {
-        const equipableDomainType = hash?.equipable?.type;
+        let equipableDomainType;
 
         if (hash?.equipable) {
+            equipableDomainType = hash.equipable.type;
             hash.equipable.type = this.equipableModelNameFromType(hash.equipable_type);
         }
 
         const normalized = super.normalize(model, hash, prop);
 
-        if (equipableDomainType && !this.equipableModelNameFromType(equipableDomainType)) {
-            const equipable = normalized?.data?.relationships?.equipable?.data;
-            const included = normalized?.included?.find((resource) => resource.type === equipable?.type && resource.id === equipable?.id);
-
-            if (included) {
-                included.attributes = included.attributes ?? {};
-                included.attributes.type = equipableDomainType;
-            }
+        if (this.shouldRestoreEquipableDomainType(equipableDomainType)) {
+            this.restoreEquipableDomainType(normalized, equipableDomainType);
         }
 
         return normalized;
@@ -38,7 +38,7 @@ export default class EquipmentSerializer extends ApplicationSerializer.extend(Em
         let key = relationship.key;
 
         if (key !== 'equipable') {
-            return typeof super.serializePolymorphicType === 'function' ? super.serializePolymorphicType(...arguments) : undefined;
+            return super.serializePolymorphicType(...arguments);
         }
 
         const belongsTo = snapshot.belongsTo(key);
@@ -48,7 +48,19 @@ export default class EquipmentSerializer extends ApplicationSerializer.extend(Em
         }
 
         key = this.keyForAttribute ? this.keyForAttribute(key, 'serialize') : key;
-        json[`${key}_type`] = belongsTo ? `fleet-ops:${belongsTo.modelName.replace(/^attachable-/, '')}` : null;
+
+        if (!belongsTo) {
+            json[`${key}_type`] = null;
+            return;
+        }
+
+        let type = belongsTo.modelName;
+
+        if (typeof type === 'string') {
+            type = type.replace(/^attachable-/, '');
+        }
+
+        json[`${key}_type`] = `fleet-ops:${type}`;
     }
 
     equipableModelNameFromType(type) {
@@ -62,6 +74,30 @@ export default class EquipmentSerializer extends ApplicationSerializer.extend(Em
             .replace(/^fleet-ops:/, '')
             .replace(/^attachable-/, '')
             .toLowerCase();
+
         return ['vehicle', 'trailer', 'driver', 'asset'].includes(normalized) ? `attachable-${normalized}` : undefined;
+    }
+
+    shouldRestoreEquipableDomainType(type) {
+        if (!type || typeof type !== 'string') {
+            return false;
+        }
+
+        return !this.equipableModelNameFromType(type);
+    }
+
+    restoreEquipableDomainType(normalized, type) {
+        const equipable = normalized?.data?.relationships?.equipable?.data;
+
+        if (!equipable) {
+            return;
+        }
+
+        const included = normalized?.included?.find((resource) => resource.type === equipable.type && resource.id === equipable.id);
+
+        if (included) {
+            included.attributes = included.attributes ?? {};
+            included.attributes.type = type;
+        }
     }
 }

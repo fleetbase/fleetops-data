@@ -1,6 +1,6 @@
-import isWaypointRecord from 'dummy/utils/is-waypoint-record';
-import WaypointModel from 'dummy/models/waypoint';
-import PlaceModel from 'dummy/models/place';
+import isWaypointRecord from '@fleetbase/fleetops-data/utils/is-waypoint-record';
+import WaypointModel from '@fleetbase/fleetops-data/models/waypoint';
+import PlaceModel from '@fleetbase/fleetops-data/models/place';
 import { module, test } from 'qunit';
 import { setupTest } from 'dummy/tests/helpers';
 import ObjectProxy from '@ember/object/proxy';

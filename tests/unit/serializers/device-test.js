@@ -213,6 +213,7 @@ module('Unit | Serializer | device', function (hooks) {
         test('a Fleetbase PHP class name resolves to the local attachable subtype', function (assert) {
             assert.strictEqual(this.serializer.attachableModelNameFromType('Fleetbase\\FleetOps\\Models\\Vehicle'), 'attachable-vehicle');
             assert.strictEqual(this.serializer.attachableModelNameFromType('Fleetbase\\FleetOps\\Models\\Asset'), 'attachable-asset');
+            assert.strictEqual(this.serializer.attachableModelNameFromType('Fleetbase\\FleetOps\\Models\\Trailer'), 'attachable-trailer');
         });
 
         test('the fleet-ops and attachable prefixes are both accepted', function (assert) {
@@ -222,7 +223,7 @@ module('Unit | Serializer | device', function (hooks) {
 
         test('a type outside the supported set is not resolved', function (assert) {
             assert.strictEqual(this.serializer.attachableModelNameFromType('Fleetbase\\Models\\Driver'), undefined);
-            assert.strictEqual(this.serializer.attachableModelNameFromType('trailer'), undefined);
+            assert.strictEqual(this.serializer.attachableModelNameFromType('place'), undefined);
         });
 
         test('a missing or non-string type is not resolved', function (assert) {
@@ -237,12 +238,12 @@ module('Unit | Serializer | device', function (hooks) {
             const normalized = this.serializer.normalize(this.store.modelFor('device'), {
                 uuid: 'device_1',
                 attachable_type: 'Fleetbase\\FleetOps\\Models\\Vehicle',
-                attachable: { uuid: 'veh_1', type: 'Fleetbase\\FleetOps\\Models\\Trailer', name: 'Trailer 1' },
+                attachable: { uuid: 'veh_1', type: 'Fleetbase\\FleetOps\\Models\\Place', name: 'Depot' },
             });
 
             const included = normalized.included.find((resource) => resource.id === 'veh_1');
 
-            assert.strictEqual(included.attributes.type, 'Fleetbase\\FleetOps\\Models\\Trailer', 'the original domain type survives normalization');
+            assert.strictEqual(included.attributes.type, 'Fleetbase\\FleetOps\\Models\\Place', 'the original domain type survives normalization');
         });
 
         test('a supported attachable type is left as the normalized model name', function (assert) {
@@ -264,7 +265,7 @@ module('Unit | Serializer | device', function (hooks) {
         test('restoring is skipped when the normalized payload has no matching included record', function (assert) {
             const normalized = { data: { relationships: { attachable: { data: { type: 'attachable-vehicle', id: 'veh_9' } } } }, included: [] };
 
-            this.serializer.restoreAttachableDomainType(normalized, 'Fleetbase\\FleetOps\\Models\\Trailer');
+            this.serializer.restoreAttachableDomainType(normalized, 'Fleetbase\\FleetOps\\Models\\Place');
 
             assert.deepEqual(normalized.included, [], 'nothing is fabricated');
         });
@@ -272,7 +273,7 @@ module('Unit | Serializer | device', function (hooks) {
         test('restoring is skipped when there is no attachable relationship at all', function (assert) {
             const normalized = { data: { relationships: {} } };
 
-            this.serializer.restoreAttachableDomainType(normalized, 'Fleetbase\\FleetOps\\Models\\Trailer');
+            this.serializer.restoreAttachableDomainType(normalized, 'Fleetbase\\FleetOps\\Models\\Place');
 
             assert.deepEqual(normalized, { data: { relationships: {} } });
         });
@@ -281,7 +282,7 @@ module('Unit | Serializer | device', function (hooks) {
             assert.false(this.serializer.shouldRestoreAttachableDomainType('vehicle'));
             assert.false(this.serializer.shouldRestoreAttachableDomainType());
             assert.false(this.serializer.shouldRestoreAttachableDomainType(42));
-            assert.true(this.serializer.shouldRestoreAttachableDomainType('Fleetbase\\FleetOps\\Models\\Trailer'));
+            assert.true(this.serializer.shouldRestoreAttachableDomainType('Fleetbase\\FleetOps\\Models\\Place'));
         });
     });
 
@@ -291,8 +292,8 @@ module('Unit | Serializer | device', function (hooks) {
             included: [{ type: 'attachable-vehicle', id: 'veh_1' }],
         };
 
-        this.serializer.restoreAttachableDomainType(normalized, 'Fleetbase\\FleetOps\\Models\\Trailer');
+        this.serializer.restoreAttachableDomainType(normalized, 'Fleetbase\\FleetOps\\Models\\Place');
 
-        assert.deepEqual(normalized.included[0].attributes, { type: 'Fleetbase\\FleetOps\\Models\\Trailer' }, 'an attributes object is created rather than crashing');
+        assert.deepEqual(normalized.included[0].attributes, { type: 'Fleetbase\\FleetOps\\Models\\Place' }, 'an attributes object is created rather than crashing');
     });
 });

@@ -2,7 +2,8 @@ import { module, test } from 'qunit';
 import { setupTest } from 'dummy/tests/helpers';
 import ApplicationSerializer from '@fleetbase/ember-core/serializers/application';
 import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
-import { assertEmbeddedAttrs, assertNormalizesUuidAsId, assertPrimaryKeyIsUuid } from 'dummy/tests/helpers/serializer-contract';
+import { EMBEDDED, assertEmbeddedAttrs, assertNormalizesUuidAsId, assertPrimaryKeyIsUuid } from 'dummy/tests/helpers/serializer-contract';
+import { snapshotStub } from 'dummy/tests/helpers/polymorphic-contract';
 
 module('Unit | Serializer | equipment', function (hooks) {
     setupTest(hooks);
@@ -19,7 +20,12 @@ module('Unit | Serializer | equipment', function (hooks) {
     });
 
     test('it declares exactly the expected relationship serialization contract', function (assert) {
-        assertEmbeddedAttrs(assert, this.store, 'equipment', {});
+        assertEmbeddedAttrs(assert, this.store, 'equipment', {
+            warranty: EMBEDDED,
+            photo: EMBEDDED,
+            equipable: EMBEDDED,
+            custom_field_values: EMBEDDED,
+        });
     });
 
     test('a server payload is normalized onto a record keyed by uuid', function (assert) {
@@ -85,5 +91,135 @@ module('Unit | Serializer | equipment', function (hooks) {
 
         assert.strictEqual(normalized.data.relationships.equipable.data.type, 'attachable-driver');
         assert.ok(store.modelFor('attachable-driver'), 'the attachable-driver model exists for the store');
+    });
+});
+
+module('Unit | Serializer | equipment | polymorphic equipable', function (hooks) {
+    setupTest(hooks);
+
+    hooks.beforeEach(function () {
+        this.store = this.owner.lookup('service:store');
+        this.serializer = this.store.serializerFor('equipment');
+    });
+
+    test('a non-equipable relationship is handed to the application serializer untouched', function (assert) {
+        const json = {};
+
+        this.serializer.serializePolymorphicType(snapshotStub({ belongsTo: { modelName: 'warranty' } }), json, { key: 'warranty' });
+
+        assert.strictEqual(json.warranty_type, 'warranty', 'the inherited implementation types it, without the fleet-ops prefix this serializer adds for equipables');
+    });
+
+    test('the equipable type is derived from the related record, without the local prefix', function (assert) {
+        for (const [modelName, expected] of Object.entries({ 'attachable-vehicle': 'vehicle', 'attachable-trailer': 'trailer', 'attachable-driver': 'driver', vehicle: 'vehicle' })) {
+            const json = {};
+
+            this.serializer.serializePolymorphicType(snapshotStub({ belongsTo: { modelName } }), json, { key: 'equipable' });
+
+            assert.strictEqual(json.equipable_type, `fleet-ops:${expected}`, `${modelName} is sent as fleet-ops:${expected}`);
+        }
+    });
+
+    test('an explicitly chosen equipable type is left untouched', function (assert) {
+        const json = {};
+
+        this.serializer.serializePolymorphicType(snapshotStub({ attrs: { equipable_type: 'fleet-ops:driver' }, belongsTo: { modelName: 'attachable-vehicle' } }), json, { key: 'equipable' });
+
+        assert.deepEqual(json, {}, 'equipment that already knows its own domain type keeps it');
+    });
+
+    test('an unset equipable clears the type rather than leaving it stale', function (assert) {
+        const json = {};
+
+        this.serializer.serializePolymorphicType(snapshotStub({ belongsTo: null }), json, { key: 'equipable' });
+
+        assert.strictEqual(json.equipable_type, null);
+    });
+
+    test('a non-string model name is passed through rather than crashing the prefix strip', function (assert) {
+        const json = {};
+
+        this.serializer.serializePolymorphicType(snapshotStub({ belongsTo: { modelName: 42 } }), json, { key: 'equipable' });
+
+        assert.strictEqual(json.equipable_type, 'fleet-ops:42');
+    });
+
+    test('the relationship key is used verbatim when the serializer has no keyForAttribute hook', function (assert) {
+        const json = {};
+        const bare = Object.create(null);
+        bare.serializePolymorphicType = this.serializer.serializePolymorphicType;
+
+        bare.serializePolymorphicType(snapshotStub({ belongsTo: { modelName: 'attachable-trailer' } }), json, { key: 'equipable' });
+
+        assert.strictEqual(json.equipable_type, 'fleet-ops:trailer');
+    });
+
+    module('equipableModelNameFromType', function () {
+        test('PHP class names and prefixed types resolve to the attachable subtype', function (assert) {
+            assert.strictEqual(this.serializer.equipableModelNameFromType('Fleetbase\\FleetOps\\Models\\Vehicle'), 'attachable-vehicle');
+            assert.strictEqual(this.serializer.equipableModelNameFromType('Fleetbase\\FleetOps\\Models\\Trailer'), 'attachable-trailer');
+            assert.strictEqual(this.serializer.equipableModelNameFromType('fleet-ops:driver'), 'attachable-driver');
+            assert.strictEqual(this.serializer.equipableModelNameFromType('attachable-asset'), 'attachable-asset');
+        });
+
+        test('a type outside the supported set, or no type at all, is not resolved', function (assert) {
+            assert.strictEqual(this.serializer.equipableModelNameFromType('Fleetbase\\FleetOps\\Models\\Place'), undefined);
+            assert.strictEqual(this.serializer.equipableModelNameFromType(), undefined);
+            assert.strictEqual(this.serializer.equipableModelNameFromType(''), undefined);
+            assert.strictEqual(this.serializer.equipableModelNameFromType(42), undefined);
+        });
+    });
+
+    module('restoring the domain type after normalization', function () {
+        test('an unsupported equipable type is written back onto the included record', function (assert) {
+            const normalized = this.serializer.normalize(this.store.modelFor('equipment'), {
+                uuid: 'equipment_1',
+                equipable_type: 'Fleetbase\\FleetOps\\Models\\Vehicle',
+                equipable: { uuid: 'veh_1', type: 'Fleetbase\\FleetOps\\Models\\Place', name: 'Depot' },
+            });
+
+            const included = normalized.included.find((resource) => resource.id === 'veh_1');
+
+            assert.strictEqual(included.attributes.type, 'Fleetbase\\FleetOps\\Models\\Place', 'the original domain type survives normalization');
+        });
+
+        test('a supported equipable type is left as the normalized model name', function (assert) {
+            const normalized = this.serializer.normalize(this.store.modelFor('equipment'), {
+                uuid: 'equipment_2',
+                equipable_type: 'Fleetbase\\FleetOps\\Models\\Trailer',
+                equipable: { uuid: 'trl_1', type: 'trailer', name: 'Flatbed 1' },
+            });
+
+            assert.strictEqual(normalized.data.relationships.equipable.data.type, 'attachable-trailer');
+        });
+
+        test('restoring is skipped when there is no matching included record, or no equipable at all', function (assert) {
+            const withoutIncluded = { data: { relationships: { equipable: { data: { type: 'attachable-vehicle', id: 'veh_9' } } } }, included: [] };
+            const withoutEquipable = { data: { relationships: {} } };
+
+            this.serializer.restoreEquipableDomainType(withoutIncluded, 'Fleetbase\\FleetOps\\Models\\Place');
+            this.serializer.restoreEquipableDomainType(withoutEquipable, 'Fleetbase\\FleetOps\\Models\\Place');
+
+            assert.deepEqual(withoutIncluded.included, [], 'nothing is fabricated');
+            assert.deepEqual(withoutEquipable, { data: { relationships: {} } });
+        });
+
+        test('the domain type is restored onto an included record that carries no attributes', function (assert) {
+            const normalized = {
+                data: { relationships: { equipable: { data: { type: 'attachable-vehicle', id: 'veh_1' } } } },
+                included: [{ type: 'attachable-vehicle', id: 'veh_1' }],
+            };
+
+            this.serializer.restoreEquipableDomainType(normalized, 'Fleetbase\\FleetOps\\Models\\Place');
+
+            assert.deepEqual(normalized.included[0].attributes, { type: 'Fleetbase\\FleetOps\\Models\\Place' }, 'an attributes object is created rather than crashing');
+        });
+
+        test('a supported or missing type never triggers a restore', function (assert) {
+            assert.false(this.serializer.shouldRestoreEquipableDomainType('vehicle'));
+            assert.false(this.serializer.shouldRestoreEquipableDomainType());
+            assert.false(this.serializer.shouldRestoreEquipableDomainType(42));
+            assert.true(this.serializer.shouldRestoreEquipableDomainType('Fleetbase\\FleetOps\\Models\\Place'));
+        });
     });
 });
