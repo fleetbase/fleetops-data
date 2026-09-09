@@ -128,6 +128,31 @@ module('Unit | Serializer | device', function (hooks) {
         assert.strictEqual(serialized.attachable_type, 'fleet-ops:vehicle');
     });
 
+    test('it normalizes and serializes trailer attachments', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serializer = store.serializerFor('device');
+        const normalized = serializer.normalize(store.modelFor('device'), {
+            uuid: 'device-2',
+            attachable_uuid: 'trailer-1',
+            attachable_type: 'fleet-ops:trailer',
+            attachable: { uuid: 'trailer-1', public_id: 'trailer_1', name: 'Reefer 1' },
+        });
+
+        assert.strictEqual(normalized.data.relationships.attachable.data.type, 'attachable-trailer');
+
+        const json = {};
+        serializer.serializePolymorphicType(
+            {
+                attr: () => undefined,
+                belongsTo: () => ({ modelName: 'attachable-trailer' }),
+            },
+            json,
+            { key: 'attachable' }
+        );
+
+        assert.strictEqual(json.attachable_type, 'fleet-ops:trailer');
+    });
+
     module('serializePolymorphicType', function () {
         test('a non-attachable relationship is handed to the application serializer untouched', function (assert) {
             const json = {};

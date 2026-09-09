@@ -4,10 +4,12 @@ import { format as formatDate, isValid as isValidDate, formatDistanceToNow } fro
 
 /**
  * Abstract base model for polymorphic maintenance subjects.
- * Concrete types: maintenance-subject-vehicle, maintenance-subject-equipment
+ * Concrete types: maintenance-subject-vehicle, maintenance-subject-trailer,
+ * maintenance-subject-equipment
  *
  * The backend stores the type as a PolymorphicType cast string, e.g.:
  *   'fleet-ops:vehicle'   -> maintenance-subject-vehicle
+ *   'fleet-ops:trailer'   -> maintenance-subject-trailer
  *   'fleet-ops:equipment' -> maintenance-subject-equipment
  */
 export default class MaintenanceSubjectModel extends Model {

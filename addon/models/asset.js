@@ -55,10 +55,22 @@ export default class AssetModel extends Model {
     @attr('string') odometer_unit;
     @attr('string') transmission;
     @attr('string') fuel_volume_unit;
-    @attr('string') fuel_Type;
+    @attr('string') fuel_type;
     @attr('string') ownership_type;
     @attr('string') engine_hours;
     @attr('string') gvw;
+    @attr('number') width;
+    @attr('number') length;
+    @attr('number') height;
+    @attr('number') tare_weight;
+    @attr('number') gvwr;
+    @attr('number') payload_capacity;
+    @attr('number') cargo_volume;
+    @attr('string') currency;
+    @attr('string') acquisition_cost;
+    @attr('string') current_value;
+    @attr('string') insurance_value;
+    @attr('string') depreciation_rate;
     @attr('raw') capacity;
     @attr('raw') specs;
     @attr('raw') attributes;
@@ -77,6 +89,8 @@ export default class AssetModel extends Model {
 
     /** @dates */
     @attr('date') deleted_at;
+    @attr('date') purchased_at;
+    @attr('date') lease_expires_at;
     @attr('date') created_at;
     @attr('date') updated_at;
 

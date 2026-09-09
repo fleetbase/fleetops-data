@@ -4,7 +4,7 @@ import { format as formatDate, isValid as isValidDate, formatDistanceToNow } fro
 
 /**
  * Abstract base model for resources a device can be attached to.
- * Concrete types: attachable-vehicle, attachable-asset.
+ * Concrete types: attachable-vehicle, attachable-asset, attachable-trailer.
  */
 export default class AttachableModel extends Model {
     /** @ids */

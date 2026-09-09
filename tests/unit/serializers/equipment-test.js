@@ -47,4 +47,43 @@ module('Unit | Serializer | equipment', function (hooks) {
 
         assert.notOk(json.warranty_uuid, 'a relationship that was never set is simply absent');
     });
+
+    test('it supports polymorphic vehicle and trailer attachments', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serializer = store.serializerFor('equipment');
+        const normalized = serializer.normalize(store.modelFor('equipment'), {
+            uuid: 'equipment-1',
+            equipable_uuid: 'trailer-1',
+            equipable_type: 'Fleetbase\\FleetOps\\Models\\Trailer',
+            equipable: { uuid: 'trailer-1', public_id: 'trailer_1', name: 'Flatbed 1' },
+        });
+
+        assert.strictEqual(normalized.data.relationships.equipable.data.type, 'attachable-trailer');
+
+        const json = {};
+        serializer.serializePolymorphicType(
+            {
+                attr: () => undefined,
+                belongsTo: () => ({ modelName: 'attachable-vehicle' }),
+            },
+            json,
+            { key: 'equipable' }
+        );
+
+        assert.strictEqual(json.equipable_type, 'fleet-ops:vehicle');
+    });
+
+    test('it resolves equipment issued to a driver through the attachable-driver model', function (assert) {
+        const store = this.owner.lookup('service:store');
+        const serializer = store.serializerFor('equipment');
+        const normalized = serializer.normalize(store.modelFor('equipment'), {
+            uuid: 'equipment-2',
+            equipable_uuid: 'driver-1',
+            equipable_type: 'fleet-ops:driver',
+            equipable: { uuid: 'driver-1', public_id: 'driver_1', name: 'Dana Driver' },
+        });
+
+        assert.strictEqual(normalized.data.relationships.equipable.data.type, 'attachable-driver');
+        assert.ok(store.modelFor('attachable-driver'), 'the attachable-driver model exists for the store');
+    });
 });
