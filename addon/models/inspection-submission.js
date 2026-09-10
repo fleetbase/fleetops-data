@@ -1,4 +1,6 @@
 import Model, { attr, belongsTo } from '@ember-data/model';
+import { computed } from '@ember/object';
+import { format as formatDate, isValid as isValidDate } from 'date-fns';
 
 export default class InspectionSubmissionModel extends Model {
     @attr('string') uuid;
@@ -43,19 +45,40 @@ export default class InspectionSubmissionModel extends Model {
         return this.public_id || this.form_name || 'Inspection';
     }
 
-    get createdAt() {
-        return this.created_at;
+    /**
+     * The display dates a table or a details panel reads — formatted here, as
+     * in every other model in this package, rather than handed out as a raw
+     * `Date` that renders as a full datetime instance string.
+     */
+    @computed('created_at') get createdAt() {
+        if (!isValidDate(this.created_at)) {
+            return null;
+        }
+
+        return formatDate(this.created_at, 'yyyy-MM-dd HH:mm');
     }
 
-    get updatedAt() {
-        return this.updated_at;
+    @computed('updated_at') get updatedAt() {
+        if (!isValidDate(this.updated_at)) {
+            return null;
+        }
+
+        return formatDate(this.updated_at, 'yyyy-MM-dd HH:mm');
     }
 
-    get submittedAt() {
-        return this.submitted_at;
+    @computed('submitted_at') get submittedAt() {
+        if (!isValidDate(this.submitted_at)) {
+            return null;
+        }
+
+        return formatDate(this.submitted_at, 'yyyy-MM-dd HH:mm');
     }
 
-    get resolvedAt() {
-        return this.resolved_at;
+    @computed('resolved_at') get resolvedAt() {
+        if (!isValidDate(this.resolved_at)) {
+            return null;
+        }
+
+        return formatDate(this.resolved_at, 'yyyy-MM-dd HH:mm');
     }
 }
