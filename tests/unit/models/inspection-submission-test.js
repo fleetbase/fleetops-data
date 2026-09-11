@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupTest } from 'dummy/tests/helpers';
-import { assertAttributeTypes, assertRelationships } from 'dummy/tests/helpers/model-contract';
+import { FIXED_DATE_LONG, assertAttributeTypes, assertDateGetters, assertRelationships } from 'dummy/tests/helpers/model-contract';
 
 module('Unit | Model | inspection-submission', function (hooks) {
     setupTest(hooks);
@@ -50,16 +50,27 @@ module('Unit | Model | inspection-submission', function (hooks) {
         assert.strictEqual(submission.displayName, 'submission_1');
     });
 
-    test('the camelCase date getters expose the raw dates', function (assert) {
-        const submitted = new Date(2026, 8, 1);
-        const resolved = new Date(2026, 8, 2);
-        const created = new Date(2026, 7, 1);
-        const updated = new Date(2026, 7, 2);
-        const submission = this.store.createRecord('inspection-submission', { submitted_at: submitted, resolved_at: resolved, created_at: created, updated_at: updated });
+    test('submitted_at renders its formatting getter', function (assert) {
+        assertDateGetters(assert, this.store.createRecord('inspection-submission'), 'submitted_at', {
+            submittedAt: FIXED_DATE_LONG,
+        });
+    });
 
-        assert.strictEqual(submission.submittedAt, submitted);
-        assert.strictEqual(submission.resolvedAt, resolved);
-        assert.strictEqual(submission.createdAt, created);
-        assert.strictEqual(submission.updatedAt, updated);
+    test('resolved_at renders its formatting getter', function (assert) {
+        assertDateGetters(assert, this.store.createRecord('inspection-submission'), 'resolved_at', {
+            resolvedAt: FIXED_DATE_LONG,
+        });
+    });
+
+    test('created_at renders its formatting getter', function (assert) {
+        assertDateGetters(assert, this.store.createRecord('inspection-submission'), 'created_at', {
+            createdAt: FIXED_DATE_LONG,
+        });
+    });
+
+    test('updated_at renders its formatting getter', function (assert) {
+        assertDateGetters(assert, this.store.createRecord('inspection-submission'), 'updated_at', {
+            updatedAt: FIXED_DATE_LONG,
+        });
     });
 });
