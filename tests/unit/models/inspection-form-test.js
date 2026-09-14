@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupTest } from 'dummy/tests/helpers';
-import { assertAttributeTypes, assertRelationships } from 'dummy/tests/helpers/model-contract';
+import { FIXED_DATE_LONG, assertAttributeTypes, assertDateGetters, assertRelationships } from 'dummy/tests/helpers/model-contract';
 
 module('Unit | Model | inspection-form', function (hooks) {
     setupTest(hooks);
@@ -37,14 +37,25 @@ module('Unit | Model | inspection-form', function (hooks) {
         assert.strictEqual(form.displayName, 'Pre-trip');
     });
 
-    test('the camelCase date getters expose the raw dates', function (assert) {
-        const published = new Date(2026, 8, 1);
-        const created = new Date(2026, 7, 1);
-        const updated = new Date(2026, 7, 2);
-        const form = this.store.createRecord('inspection-form', { published_at: published, created_at: created, updated_at: updated });
+    test('it no longer declares a frequency attribute', function (assert) {
+        assert.notOk(this.store.modelFor('inspection-form').attributes.has('frequency'), 'inspection-form does not declare `frequency`');
+    });
 
-        assert.strictEqual(form.publishedAt, published);
-        assert.strictEqual(form.createdAt, created);
-        assert.strictEqual(form.updatedAt, updated);
+    test('published_at renders its formatting getter', function (assert) {
+        assertDateGetters(assert, this.store.createRecord('inspection-form'), 'published_at', {
+            publishedAt: FIXED_DATE_LONG,
+        });
+    });
+
+    test('created_at renders its formatting getter', function (assert) {
+        assertDateGetters(assert, this.store.createRecord('inspection-form'), 'created_at', {
+            createdAt: FIXED_DATE_LONG,
+        });
+    });
+
+    test('updated_at renders its formatting getter', function (assert) {
+        assertDateGetters(assert, this.store.createRecord('inspection-form'), 'updated_at', {
+            updatedAt: FIXED_DATE_LONG,
+        });
     });
 });
