@@ -1,12 +1,12 @@
-> v0.2.0 ~ "First-class trailers, inspections and full test coverage"
+> v0.2.1 ~ "Inspection display dates"
 
 ---
 ## Highlights
 
-- **First-class Trailer data models** — trailer models, serializers and data contracts for the console, with current trailers embedded on the vehicle serializer.
-- **Inspection data models** — models and serializers backing the maintenance platform upgrade.
-- **`is-waypoint-record` util** — moved out of `ember-core` and into this package.
-- **Test coverage campaign** — a 100% coverage gate wired into CI, with Codecov reporting.
+- **Inspection display dates are formatted** — `inspection-form` and `inspection-submission` format their display-date getters as `yyyy-MM-dd HH:mm` and answer `null` for a date they cannot read, the way every other model in this package does. The console's inspection indexes were showing a raw datetime instance string.
+- **`frequency` is gone from `inspection-form`** — nothing scheduled an inspection from it, and it is being dropped from the FleetOps API resource, report schema and console in fleetbase/fleetops#319.
+
+The underscored attributes (`created_at`, `published_at`, …) are untouched, so anything needing a real `Date` is unaffected.
 
 ---
 ## Need help?

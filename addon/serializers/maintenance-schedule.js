@@ -1,6 +1,7 @@
 import ApplicationSerializer from '@fleetbase/ember-core/serializers/application';
 import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
 import { isBlank } from '@ember/utils';
+import clearUnsetPolymorphicRelationships from '../utils/clear-unset-polymorphic-relationships';
 
 export default class MaintenanceScheduleSerializer extends ApplicationSerializer.extend(EmbeddedRecordsMixin) {
     /**
@@ -26,6 +27,7 @@ export default class MaintenanceScheduleSerializer extends ApplicationSerializer
         const json = super.serialize(snapshot, options);
         const readOnly = ['subject_name', 'default_assignee_name'];
         readOnly.forEach((attr) => delete json[attr]);
+        clearUnsetPolymorphicRelationships(snapshot, json, ['subject', 'default_assignee']);
         return json;
     }
 
@@ -44,7 +46,9 @@ export default class MaintenanceScheduleSerializer extends ApplicationSerializer
         let key = relationship.key;
         let belongsTo = snapshot.belongsTo(key);
 
-        const isPolymorphicTypeBlank = isBlank(snapshot.attr(key + '_type'));
+        // Read the type through attributes(): these models declare no `<key>_type`
+        // attribute, and snapshot.attr() asserts on an undeclared one.
+        const isPolymorphicTypeBlank = isBlank(snapshot.attributes()[key + '_type']);
         if (isPolymorphicTypeBlank) {
             key = this.keyForAttribute ? this.keyForAttribute(key, 'serialize') : key;
             if (!belongsTo) {

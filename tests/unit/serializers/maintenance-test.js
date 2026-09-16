@@ -72,4 +72,14 @@ module('Unit | Serializer | maintenance', function (hooks) {
 
         assert.strictEqual(json['maintainable_type'], 'fleet-ops:vendor', 'the raw key still produces a usable type field');
     });
+
+    test('a record whose model declares no polymorphic type attributes serializes without asserting', function (assert) {
+        const record = this.store.createRecord('maintenance', { maintainable: this.store.createRecord('maintenance-subject-vehicle', { id: 'subject_1' }) });
+
+        const json = record.serialize();
+
+        assert.strictEqual(json.maintainable_type, 'fleet-ops:vehicle', 'the type is derived from the related record');
+        assert.strictEqual(json.performed_by_uuid, null, 'an unset performed_by clears its uuid');
+        assert.strictEqual(json.performed_by_type, null, 'an unset performed_by clears its type');
+    });
 });
