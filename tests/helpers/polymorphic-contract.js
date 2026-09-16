@@ -17,13 +17,14 @@
  * Build the smallest snapshot `serializePolymorphicType` actually reads.
  *
  * @param {Object} [options]
- * @param {Object} [options.attrs] values `snapshot.attr(key)` should return
+ * @param {Object} [options.attrs] values `snapshot.attr(key)` and `snapshot.attributes()` should return
  * @param {Object|null} [options.belongsTo] value `snapshot.belongsTo(key)` should return
  * @return {Object}
  */
 export function snapshotStub({ attrs = {}, belongsTo = null } = {}) {
     return {
         attr: (key) => attrs[key],
+        attributes: () => attrs,
         belongsTo: () => belongsTo,
     };
 }

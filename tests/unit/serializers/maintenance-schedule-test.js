@@ -76,4 +76,14 @@ module('Unit | Serializer | maintenance schedule', function (hooks) {
         assert.strictEqual(normalized.data.relationships.default_assignee.data.type, 'facilitator-driver');
         assert.strictEqual(normalized.data.relationships.default_assignee.data.id, 'driver-1');
     });
+
+    test('a record whose model declares no polymorphic type attributes serializes without asserting', function (assert) {
+        const record = this.store.createRecord('maintenance-schedule', { subject: this.store.createRecord('maintenance-subject-vehicle', { id: 'subject_1' }) });
+
+        const json = record.serialize();
+
+        assert.strictEqual(json.subject_type, 'fleet-ops:vehicle', 'the type is derived from the related record');
+        assert.strictEqual(json.default_assignee_uuid, null, 'an unset default_assignee clears its uuid');
+        assert.strictEqual(json.default_assignee_type, null, 'an unset default_assignee clears its type');
+    });
 });
