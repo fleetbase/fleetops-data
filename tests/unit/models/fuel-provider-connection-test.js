@@ -1,4 +1,5 @@
 import { module, test } from 'qunit';
+import { set } from '@ember/object';
 import { setupTest } from 'dummy/tests/helpers';
 import { FIXED_DATE, FIXED_DATE_LONG, THREE_DAYS_DISTANCE, assertDateGetters, assertDefaults, assertRelationships } from 'dummy/tests/helpers/model-contract';
 
@@ -35,6 +36,37 @@ module('Unit | Model | fuel provider connection', function (hooks) {
     });
 
     module('display and formatting', function () {
+        test('sync counts default to zero when a connection has no complete summary', function (assert) {
+            const connection = this.store.createRecord('fuel-provider-connection');
+
+            assert.strictEqual(connection.lastImported, '0', 'a new connection has no imports');
+            assert.strictEqual(connection.lastUnmatched, '0', 'a new connection has no unmatched purchases');
+
+            for (const state of [null, {}, { summary: null }, { summary: {} }, { summary: { imported: null, unmatched: null } }]) {
+                connection.set('last_sync_state', state);
+                assert.strictEqual(connection.lastImported, '0', 'an absent import count has a readable fallback');
+                assert.strictEqual(connection.lastUnmatched, '0', 'an absent unmatched count has a readable fallback');
+            }
+        });
+
+        test('sync counts display the summary and update when a later sync changes it', function (assert) {
+            const connection = this.store.createRecord('fuel-provider-connection', {
+                last_sync_state: { summary: { imported: 12, unmatched: 3 } },
+            });
+
+            assert.strictEqual(connection.lastImported, '12');
+            assert.strictEqual(connection.lastUnmatched, '3');
+
+            connection.set('last_sync_state', { summary: { imported: 5, unmatched: 0 } });
+            assert.strictEqual(connection.lastImported, '5', 'replacing the sync result invalidates the cached count');
+            assert.strictEqual(connection.lastUnmatched, '0', 'a successful zero count is preserved');
+
+            set(connection, 'last_sync_state.summary.imported', 8);
+            set(connection, 'last_sync_state.summary.unmatched', 2);
+            assert.strictEqual(connection.lastImported, '8', 'nested import updates invalidate the cached count');
+            assert.strictEqual(connection.lastUnmatched, '2', 'nested unmatched updates invalidate the cached count');
+        });
+
         test('displayName prefers the connection name over the provider', function (assert) {
             const connection = this.store.createRecord('fuel-provider-connection', { name: 'Shell APAC', provider: 'shell' });
             assert.strictEqual(connection.displayName, 'Shell APAC');

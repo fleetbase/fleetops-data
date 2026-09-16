@@ -9,6 +9,7 @@ export default class FuelProviderConnectionModel extends Model {
     @attr('string') name;
     @attr('string', { defaultValue: 'production' }) environment;
     @attr('string', { defaultValue: 'configured' }) status;
+    @attr('raw') credentials;
     @attr('raw') sync_settings;
     @attr('raw') last_sync_state;
     @attr('string') last_error;
@@ -23,6 +24,14 @@ export default class FuelProviderConnectionModel extends Model {
 
     @computed('provider', 'name') get displayName() {
         return this.name || this.provider;
+    }
+
+    @computed('last_sync_state.summary.imported') get lastImported() {
+        return String(this.last_sync_state?.summary?.imported ?? 0);
+    }
+
+    @computed('last_sync_state.summary.unmatched') get lastUnmatched() {
+        return String(this.last_sync_state?.summary?.unmatched ?? 0);
     }
 
     @computed('last_synced_at') get lastSyncedAt() {
