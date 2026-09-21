@@ -20,4 +20,21 @@ export default class ContactSerializer extends ApplicationSerializer.extend(Embe
             custom_field_values: { embedded: 'always' },
         };
     }
+
+    /**
+     * The login account is resolved by the server from the contact's name,
+     * email and phone, so the account reference is never sent back.
+     *
+     * @param {Snapshot} snapshot
+     * @param {Object} options
+     * @return {Object} json
+     */
+    serialize() {
+        const json = super.serialize(...arguments);
+
+        delete json.user;
+        delete json.user_uuid;
+
+        return json;
+    }
 }
