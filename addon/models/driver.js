@@ -62,6 +62,10 @@ export default class DriverModel extends Model {
     @attr('string') city;
     @attr('string', { defaultValue: 'available' }) status;
     @attr('boolean') online;
+
+    /** @managed-login (read-only, maintained by the server) */
+    @attr('boolean') is_staff_linked;
+    @attr('string') login_status;
     @attr('raw') meta;
 
     /** @dates */

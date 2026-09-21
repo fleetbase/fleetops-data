@@ -9,7 +9,11 @@ export default class ContactSerializer extends ApplicationSerializer.extend(Embe
      */
     get attrs() {
         return {
-            user: { embedded: 'always' },
+            // The login account is managed by the server from name/email/phone
+            user: { embedded: 'always', serialize: false },
+            user_uuid: { serialize: false },
+            is_staff_linked: { serialize: false },
+            login_status: { serialize: false },
             place: { embedded: 'always' },
             places: { embedded: 'always' },
             photo: { embedded: 'always' },

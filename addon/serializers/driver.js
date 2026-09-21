@@ -17,6 +17,10 @@ export default class DriverSerializer extends ApplicationSerializer.extend(Embed
             current_job: { embedded: 'always' },
             jobs: { embedded: 'always' },
             custom_field_values: { embedded: 'always' },
+            // The login account is managed by the server from name/email/phone
+            user_uuid: { serialize: false },
+            is_staff_linked: { serialize: false },
+            login_status: { serialize: false },
         };
     }
 
