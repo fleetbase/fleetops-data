@@ -28,7 +28,18 @@ module('Unit | Serializer | driver', function (hooks) {
             current_job: EMBEDDED,
             jobs: EMBEDDED,
             custom_field_values: EMBEDDED,
+            user_uuid: { serialize: false },
+            is_staff_linked: { serialize: false },
+            login_status: { serialize: false },
         });
+    });
+
+    test('the server-managed login fields never travel back to the server', function (assert) {
+        const driver = this.store.createRecord('driver', { name: 'Ada Lovelace', is_staff_linked: true, login_status: 'active' });
+        const json = driver.serialize();
+
+        assert.false('is_staff_linked' in json);
+        assert.false('login_status' in json);
     });
 
     test('a server payload is normalized onto a record keyed by uuid', function (assert) {
