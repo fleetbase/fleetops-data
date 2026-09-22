@@ -1,12 +1,11 @@
-> v0.2.1 ~ "Inspection display dates"
+
+> v0.2.2 ~ "Managed login state"
 
 ---
 ## Highlights
 
-- **Inspection display dates are formatted** — `inspection-form` and `inspection-submission` format their display-date getters as `yyyy-MM-dd HH:mm` and answer `null` for a date they cannot read, the way every other model in this package does. The console's inspection indexes were showing a raw datetime instance string.
-- **`frequency` is gone from `inspection-form`** — nothing scheduled an inspection from it, and it is being dropped from the FleetOps API resource, report schema and console in fleetbase/fleetops#319.
-
-The underscored attributes (`created_at`, `published_at`, …) are untouched, so anything needing a real `Date` is unaffected.
+- **Driver and contact models expose their login state.** New read-only `is_staff_linked` and `login_status` attributes let the console show Reset Password, Send Credentials and Deactivate/Reactivate Login. They also lock email and phone on a profile linked to a team member's account.
+- **The login account is never sent back.** Driver and contact login accounts are now managed by the server from the profile's name, email and phone (fleetbase/fleetops#338). The driver serializer no longer sends `user_uuid` or the login fields. The contact serializer no longer sends `user`, `user_uuid` or the login fields.
 
 ---
 ## Need help?
