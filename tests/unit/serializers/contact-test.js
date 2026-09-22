@@ -20,7 +20,10 @@ module('Unit | Serializer | contact', function (hooks) {
 
     test('it declares exactly the expected relationship serialization contract', function (assert) {
         assertEmbeddedAttrs(assert, this.store, 'contact', {
-            user: { embedded: 'always' },
+            user: { embedded: 'always', serialize: false },
+            user_uuid: { serialize: false },
+            is_staff_linked: { serialize: false },
+            login_status: { serialize: false },
             place: { embedded: 'always' },
             places: { embedded: 'always' },
             photo: { embedded: 'always' },
@@ -38,6 +41,15 @@ module('Unit | Serializer | contact', function (hooks) {
         const record = this.store.createRecord('contact', { name: 'contract-value' });
 
         assert.strictEqual(record.serialize().name, 'contract-value');
+    });
+
+    test('the server-managed login fields never travel back to the server', function (assert) {
+        const record = this.store.createRecord('contact', { name: 'contract-value', is_staff_linked: true, login_status: 'active' });
+        const json = record.serialize();
+
+        assert.false('is_staff_linked' in json);
+        assert.false('login_status' in json);
+        assert.false('user' in json);
     });
 
     test('the place relationship travels inline with the record', function (assert) {

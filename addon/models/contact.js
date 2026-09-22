@@ -34,6 +34,10 @@ export default class ContactModel extends Model {
     photo_url;
     @attr('string') slug;
 
+    /** @managed-login (read-only, maintained by the server) */
+    @attr('boolean') is_staff_linked;
+    @attr('string') login_status;
+
     /** @dates */
     @attr('date') deleted_at;
     @attr('date') created_at;
