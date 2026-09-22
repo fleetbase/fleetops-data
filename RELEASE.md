@@ -1,4 +1,3 @@
-
 > v0.2.2 ~ "Managed login state"
 
 ---
