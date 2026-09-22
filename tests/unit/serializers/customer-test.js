@@ -20,7 +20,10 @@ module('Unit | Serializer | customer', function (hooks) {
 
     test('it declares exactly the expected relationship serialization contract', function (assert) {
         assertEmbeddedAttrs(assert, this.store, 'customer', {
-            user: { embedded: 'always' },
+            user: { embedded: 'always', serialize: false },
+            user_uuid: { serialize: false },
+            is_staff_linked: { serialize: false },
+            login_status: { serialize: false },
             place: { embedded: 'always' },
             places: { embedded: 'always' },
             photo: { embedded: 'always' },
