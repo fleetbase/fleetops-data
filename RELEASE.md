@@ -1,10 +1,9 @@
-> v0.2.2 ~ "Managed login state"
+> v0.2.3 ~ "Customer places load"
 
 ---
 ## Highlights
 
-- **Driver and contact models expose their login state.** New read-only `is_staff_linked` and `login_status` attributes let the console show Reset Password, Send Credentials and Deactivate/Reactivate Login. They also lock email and phone on a profile linked to a team member's account.
-- **The login account is never sent back.** Driver and contact login accounts are now managed by the server from the profile's name, email and phone (fleetbase/fleetops#338). The driver serializer no longer sends `user_uuid` or the login fields. The contact serializer no longer sends `user`, `user_uuid` or the login fields.
+- **An order's customer loads with its saved places.** Customer contacts now have their own serializer, so their embedded `place` and `places` load as `place` records. Before, a place with a type such as "apartment" or "house" was read as a model name, and the order failed to load with "No model was found for 'apartment'".
 
 ---
 ## Need help?
