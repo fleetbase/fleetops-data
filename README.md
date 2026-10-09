@@ -40,7 +40,7 @@ An instance initializer registers the descriptors with the `resource-registry` s
 
 Opening a resource loads the Fleet-Ops engine on demand and hands the record to its action service, so the engine bundle is only fetched when someone clicks. When Fleet-Ops itself boots it replaces these descriptors with its own, which open the same panels directly.
 
-The helpers behind the descriptors and the styled placeholder images are exported from `@fleetbase/fleetops-data/utils/resource-descriptors` and `@fleetbase/fleetops-data/utils/placeholder-images` for other packages that build descriptors.
+The helpers behind the descriptors and the styled placeholder images are exported from `@fleetbase/fleetops-data/utils/resource-descriptors` and `@fleetbase/fleetops-data/utils/placeholder-images` for other packages that build descriptors. `@fleetbase/fleetops-data/utils/identity-stub` builds a stand-in record for a relation a row only knows by name (`driver_name`, `pickupName`), so an identity cell can render it and load the real record on demand.
 
 
 ## Contributing
