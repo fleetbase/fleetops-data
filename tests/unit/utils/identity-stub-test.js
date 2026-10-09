@@ -15,6 +15,7 @@ module('Unit | Utility | identity-stub', function () {
         assert.strictEqual(buildIdentityStub(null, { type: 'place', name: 'Depot', extra: { city: 'SG' } }).city, 'SG');
         assert.strictEqual(buildIdentityStub({}, { type: 'driver' }), null, 'a row without the name has no stub');
         assert.strictEqual(buildIdentityStub(null, { type: 'driver' }), null, 'no row, no stub');
+        assert.strictEqual(buildIdentityStub({ driver_name: 'Ada' }), null, 'no options means no type to name the stub after');
     });
 
     test('loadResource resolves to null without a loader', async function (assert) {
