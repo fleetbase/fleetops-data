@@ -7,8 +7,7 @@
         "fleetops-data",
         "fleetbase-fleet-ops",
         "fleetbase",
-        "ember-addon",
-        "ember-engine"
+        "ember-addon"
     ],
     "repository": "https://github.com/fleetbase/fleetops-data",
     "license": "AGPL-3.0-or-later",

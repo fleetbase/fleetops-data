@@ -109,7 +109,9 @@ module('Unit | Utility | resource-descriptors/helpers', function (hooks) {
         assert.strictEqual(typeLabel(''), null);
         assert.strictEqual(typeLabel('customer-fleet-ops:contact'), 'Customer');
         assert.strictEqual(typeLabel('facilitator_vendor'), 'Facilitator vendor');
-        assert.strictEqual(typeLabel(':contact'), null, 'nothing readable before the colon');
+        assert.strictEqual(typeLabel('fleet-ops:contact'), 'Contact', 'a bare extension prefix reads as the type after it');
+        assert.strictEqual(typeLabel(':contact'), 'Contact');
+        assert.strictEqual(typeLabel(':'), null, 'nothing readable on either side');
     });
 
     test('money and join leave out what is missing', function (assert) {
@@ -140,6 +142,20 @@ module('Unit | Utility | resource-descriptors/helpers', function (hooks) {
             assert.strictEqual(extensionManager({ lookup: () => null }), null);
             assert.strictEqual(extensionManager({ lookup: (name) => (name === 'service:universe/extension-manager' ? manager : null) }), manager);
             assert.strictEqual(extensionManager({ lookup: (name) => (name === 'service:universe' ? { extensionManager: manager } : null) }), manager);
+            assert.strictEqual(
+                extensionManager({
+                    lookup: (name) =>
+                        name === 'service:universe'
+                            ? {
+                                  get extensionManager() {
+                                      throw new Error('no manager on this host');
+                                  },
+                              }
+                            : null,
+                }),
+                null,
+                'a universe whose manager lookup throws counts as no manager'
+            );
         });
 
         test('engineInstalled is false without a manager, when not installed, or when the check throws', function (assert) {

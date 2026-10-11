@@ -107,11 +107,10 @@ export function typeLabel(value) {
         return null;
     }
 
-    const head = String(value)
-        .split(':')[0]
-        .replace(/-fleet-ops$/, '')
-        .replace(/[-_]+/g, ' ')
-        .trim();
+    const [prefix, ...rest] = String(value).split(':');
+    // "customer-fleet-ops:contact" reads as "Customer"; a bare "fleet-ops:contact" has
+    // nothing before the extension name, so it reads as the type after the colon.
+    const head = (prefix.replace(/-?fleet-ops$/, '') || rest.join(':')).replace(/[-_]+/g, ' ').trim();
 
     return head ? head.charAt(0).toUpperCase() + head.slice(1) : null;
 }
@@ -138,7 +137,18 @@ export function polymorphicType(record, relationName, typeAttr) {
 
 /** The universe extension manager, through either of its service names. */
 export function extensionManager(owner) {
-    return lookupService(owner, 'universe/extension-manager') ?? lookupService(owner, 'universe')?.extensionManager ?? null;
+    const direct = lookupService(owner, 'universe/extension-manager');
+
+    if (direct) {
+        return direct;
+    }
+
+    // The universe service resolves its manager lazily and throws on a host that has none.
+    try {
+        return lookupService(owner, 'universe')?.extensionManager ?? null;
+    } catch {
+        return null;
+    }
 }
 
 /** Whether an engine is installed, so a resource it owns has somewhere to open. */
