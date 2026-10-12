@@ -253,6 +253,15 @@ module('Unit | Utility | resource-descriptors/helpers', function (hooks) {
             assert.true(isInsideEngine(null), 'no manager');
             assert.true(isInsideEngine(manager(undefined)), 'no route');
             assert.true(isInsideEngine(manager('console.storefront.index', null)), 'no mount point');
+            assert.true(
+                isInsideEngine({
+                    applicationInstance: { lookup: () => ({ currentRouteName: 'console.storefront.index' }) },
+                    getEngineMountPoint: () => {
+                        throw new Error('engine not registered');
+                    },
+                }),
+                'a manager that throws'
+            );
         });
     });
 });
