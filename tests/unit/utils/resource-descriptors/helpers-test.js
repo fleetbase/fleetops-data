@@ -19,6 +19,7 @@ import {
     extensionManager,
     engineInstalled,
     engineOpener,
+    isInsideEngine,
     FLEETOPS_ENGINE,
 } from '@fleetbase/fleetops-data/utils/resource-descriptors/helpers';
 import { PLACEHOLDER_IMAGES } from '@fleetbase/fleetops-data/utils/placeholder-images';
@@ -218,6 +219,40 @@ module('Unit | Utility | resource-descriptors/helpers', function (hooks) {
                 ['transition-only', record],
                 ['transition', record],
             ]);
+        });
+
+        test("engineOpener opens the record's page instead of a panel outside the engine's routes", async function (assert) {
+            const record = { id: 'r1' };
+            const seen = [];
+            const service = { panel: { view: () => seen.push('panel') }, transition: { view: () => seen.push('transition') } };
+            const at = (routeName) =>
+                ownerWithEngine(
+                    { 'vehicle-actions': service, 'panel-only': { panel: { view: () => seen.push('panel-only') } } },
+                    {
+                        applicationInstance: { lookup: (name) => (name === 'service:router' ? { currentRouteName: routeName } : null) },
+                        getEngineMountPoint: () => 'console.fleet-ops.',
+                    }
+                );
+
+            assert.true(await engineOpener(at('console.fleet-ops.management.vehicles.index'), 'vehicle-actions')(record));
+            assert.true(await engineOpener(at('console.storefront.food-trucks.index'), 'vehicle-actions')(record));
+            assert.false(await engineOpener(at('console.storefront.food-trucks.index'), 'panel-only')(record), 'nothing to open outside without a transition');
+            assert.deepEqual(seen, ['panel', 'transition'], 'the panel inside Fleet-Ops, the page from Storefront');
+        });
+
+        test('isInsideEngine reads the console route against the engine mount point and assumes yes when it cannot tell', function (assert) {
+            const manager = (routeName, mountPoint = 'console.fleet-ops.') => ({
+                applicationInstance: { lookup: () => ({ currentRouteName: routeName }) },
+                getEngineMountPoint: () => mountPoint,
+            });
+
+            assert.true(isInsideEngine(manager('console.fleet-ops.operations.orders.index')));
+            assert.true(isInsideEngine(manager('console.fleet-ops')), 'the engine root');
+            assert.false(isInsideEngine(manager('console.storefront.index')));
+            assert.false(isInsideEngine(manager('console.fleet-ops-reports.index')), 'a prefix match is not enough');
+            assert.true(isInsideEngine(null), 'no manager');
+            assert.true(isInsideEngine(manager(undefined)), 'no route');
+            assert.true(isInsideEngine(manager('console.storefront.index', null)), 'no mount point');
         });
     });
 });
