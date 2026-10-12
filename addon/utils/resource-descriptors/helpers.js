@@ -163,9 +163,31 @@ export function engineInstalled(owner, engineName = FLEETOPS_ENGINE) {
 }
 
 /**
+ * Whether the console is on one of the engine's own routes. Unknown means yes, so a host
+ * without a router keeps the previous behaviour.
+ */
+export function isInsideEngine(manager, engineName = FLEETOPS_ENGINE) {
+    let current;
+    let mountPoint;
+
+    try {
+        current = manager?.applicationInstance?.lookup?.('service:router')?.currentRouteName;
+        mountPoint = manager?.getEngineMountPoint?.(engineName);
+    } catch {
+        return true;
+    }
+
+    if (typeof current !== 'string' || typeof mountPoint !== 'string' || mountPoint === '') {
+        return true;
+    }
+
+    return current === mountPoint.replace(/\.$/, '') || current.startsWith(mountPoint);
+}
+
+/**
  * An opener that loads an engine on demand, then hands the record to one of
- * its action services: the context panel when it has one, else its route
- * transition. The engine bundle is only fetched when someone actually clicks,
+ * its action services: the context panel when it has one and the console is inside that
+ * engine, else its route transition. The engine bundle is only fetched when someone actually clicks,
  * never when a page that merely shows the resource renders.
  */
 export function engineOpener(owner, serviceName, { engineName = FLEETOPS_ENGINE, mode = 'panel' } = {}) {
@@ -190,7 +212,10 @@ export function engineOpener(owner, serviceName, { engineName = FLEETOPS_ENGINE,
             return false;
         }
 
-        const view = (mode === 'panel' ? (service.panel?.view ?? service.transition?.view) : null) ?? (mode === 'transition' ? service.transition?.view : null);
+        // A panel renders the engine's own components, which only resolve inside that engine's
+        // routes; from anywhere else (Storefront, the console home) open the record's page instead.
+        const panelView = mode === 'panel' && isInsideEngine(manager, engineName) ? service.panel?.view : null;
+        const view = panelView ?? (mode === 'panel' || mode === 'transition' ? service.transition?.view : null);
 
         if (typeof view !== 'function') {
             return false;
