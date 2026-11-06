@@ -1021,4 +1021,13 @@ module('Unit | Model | order', function (hooks) {
             assert.deepEqual(calls[0].args[2], {}, 'the options argument defaults to an empty object');
         });
     });
+
+    test('adhoc dispatch and payment state are attributes', function (assert) {
+        const order = this.store.createRecord('order', { adhoc_strategy: 'sequential', required_vehicle_type: 'economy' });
+
+        assert.strictEqual(order.adhoc_strategy, 'sequential');
+        assert.strictEqual(order.required_vehicle_type, 'economy');
+        assert.strictEqual(order.paid_at, undefined);
+        assert.strictEqual(order.fare_finalized_at, undefined);
+    });
 });
