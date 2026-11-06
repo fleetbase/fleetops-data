@@ -20,6 +20,8 @@ module('Unit | Model | order config', function (hooks) {
     test('a new record applies its configured defaults', function (assert) {
         assertDefaults(assert, this.store.createRecord('order-config'), {
             core_service: false,
+            customer_orders_adhoc: false,
+            match_vehicle_type: false,
         });
     });
 
@@ -89,5 +91,12 @@ module('Unit | Model | order config', function (hooks) {
             assert.throws(() => config.removeTag(5), /index/i, 'an out-of-range removal is a programming error, not a no-op');
             assert.deepEqual(config.tags, ['priority'], 'and the list is untouched');
         });
+    });
+
+    test('adhoc dispatch settings are attributes', function (assert) {
+        const config = this.store.createRecord('order-config', { adhoc_strategy: 'broadcast', adhoc_offer_timeout: 30 });
+
+        assert.strictEqual(config.adhoc_strategy, 'broadcast');
+        assert.strictEqual(config.adhoc_offer_timeout, 30);
     });
 });

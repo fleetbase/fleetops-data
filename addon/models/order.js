@@ -82,6 +82,10 @@ export default class OrderModel extends Model {
     @attr('string') latest_status_code;
     @attr('string') currency;
     @attr('number') adhoc_distance;
+    /** How the order is offered to drivers when adhoc: a strategy name, or null for the config or company default. */
+    @attr('string') adhoc_strategy;
+    /** Only drivers whose vehicle is of this type are offered the order. */
+    @attr('string') required_vehicle_type;
     @attr('number') distance;
     @attr('number') time;
     @attr('number') total_entities;
@@ -110,6 +114,8 @@ export default class OrderModel extends Model {
 
     /** @dates */
     @attr('date') scheduled_at;
+    @attr('date') fare_finalized_at;
+    @attr('date') paid_at;
     @attr('date') dispatched_at;
     @attr('date') started_at;
     @attr('date') deleted_at;
