@@ -29,6 +29,15 @@ export default class OrderConfigModel extends Model {
     @attr('object') flow;
     @attr('object') meta;
 
+    /** How adhoc orders on this config are offered to drivers. Null uses the company default. */
+    @attr('string') adhoc_strategy;
+    /** Seconds a driver has to accept a one-at-a-time offer. Null uses the company default. */
+    @attr('number') adhoc_offer_timeout;
+    /** Orders customers place on this config go to nearby drivers. */
+    @attr('boolean', { defaultValue: false }) customer_orders_adhoc;
+    /** Customer orders on this config need a fare and only go to drivers of its vehicle type. */
+    @attr('boolean', { defaultValue: false }) match_vehicle_type;
+
     /** @computed */
     @computed('updated_at') get updatedAgo() {
         if (!isValidDate(this.updated_at)) {
