@@ -1022,12 +1022,10 @@ module('Unit | Model | order', function (hooks) {
         });
     });
 
-    test('adhoc dispatch and payment state are attributes', function (assert) {
+    test('adhoc dispatch settings are attributes', function (assert) {
         const order = this.store.createRecord('order', { adhoc_strategy: 'sequential', required_vehicle_type: 'economy' });
 
         assert.strictEqual(order.adhoc_strategy, 'sequential');
         assert.strictEqual(order.required_vehicle_type, 'economy');
-        assert.strictEqual(order.paid_at, undefined);
-        assert.strictEqual(order.fare_finalized_at, undefined);
     });
 });

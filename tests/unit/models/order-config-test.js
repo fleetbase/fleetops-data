@@ -20,8 +20,6 @@ module('Unit | Model | order config', function (hooks) {
     test('a new record applies its configured defaults', function (assert) {
         assertDefaults(assert, this.store.createRecord('order-config'), {
             core_service: false,
-            customer_orders_adhoc: false,
-            match_vehicle_type: false,
         });
     });
 
@@ -93,10 +91,12 @@ module('Unit | Model | order config', function (hooks) {
         });
     });
 
-    test('adhoc dispatch settings are attributes', function (assert) {
-        const config = this.store.createRecord('order-config', { adhoc_strategy: 'broadcast', adhoc_offer_timeout: 30 });
+    test('policies and triggers are attributes', function (assert) {
+        const policies = { dispatch: { adhoc: { strategy: 'broadcast', offer_timeout: 30 } } };
+        const triggers = [{ event: 'order.created', action: 'notify_customer', params: { title: 'Thanks' } }];
+        const config = this.store.createRecord('order-config', { policies, triggers });
 
-        assert.strictEqual(config.adhoc_strategy, 'broadcast');
-        assert.strictEqual(config.adhoc_offer_timeout, 30);
+        assert.deepEqual(config.policies, policies);
+        assert.deepEqual(config.triggers, triggers);
     });
 });

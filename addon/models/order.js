@@ -114,8 +114,6 @@ export default class OrderModel extends Model {
 
     /** @dates */
     @attr('date') scheduled_at;
-    @attr('date') fare_finalized_at;
-    @attr('date') paid_at;
     @attr('date') dispatched_at;
     @attr('date') started_at;
     @attr('date') deleted_at;
