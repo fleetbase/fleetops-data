@@ -29,6 +29,11 @@ export default class OrderConfigModel extends Model {
     @attr('object') flow;
     @attr('object') meta;
 
+    /** How the config's orders behave, by policy (`dispatch.adhoc`, `customer.ordering`, ...). Settings left out take their defaults. */
+    @attr('object') policies;
+    /** Actions the config runs on order events, as `{ event, action, params, options, when }`. */
+    @attr('array') triggers;
+
     /** @computed */
     @computed('updated_at') get updatedAgo() {
         if (!isValidDate(this.updated_at)) {

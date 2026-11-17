@@ -90,4 +90,13 @@ module('Unit | Model | order config', function (hooks) {
             assert.deepEqual(config.tags, ['priority'], 'and the list is untouched');
         });
     });
+
+    test('policies and triggers are attributes', function (assert) {
+        const policies = { dispatch: { adhoc: { strategy: 'broadcast', offer_timeout: 30 } } };
+        const triggers = [{ event: 'order.created', action: 'notify_customer', params: { title: 'Thanks' } }];
+        const config = this.store.createRecord('order-config', { policies, triggers });
+
+        assert.deepEqual(config.policies, policies);
+        assert.deepEqual(config.triggers, triggers);
+    });
 });

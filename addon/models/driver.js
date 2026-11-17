@@ -67,6 +67,9 @@ export default class DriverModel extends Model {
     @attr('boolean') is_staff_linked;
     @attr('string') login_status;
     @attr('raw') meta;
+    /** Average stars from customers' ratings, and how many ratings it comes from. */
+    @attr('number') rating_average;
+    @attr('number') rating_count;
 
     /** @dates */
     @attr('date') license_expiry;
